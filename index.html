@@ -1,640 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>시몬스 인사부문 · HR 챗봇 시안 3종</title>
+<title>시몬스 인사부문 HR 챗봇 · 1안-S 시안</title>
+<meta name="description" content="노션을 지식 소스로 쓰는 사내 HR 챗봇 위젯 프로토타입">
+<meta name="color-scheme" content="light">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
-:root{
-  --ink:#12161C; --mute:#6B7484; --line:#E3E6EC; --bg:#F2F3F6;
-  --font:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-}
+:root{--ink:#12161C;--mute:#6B7484;--line:#E3E6EC;--bg:#F2F3F6;--blue:#2F6FED;
+ --font:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{font-family:var(--font);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-button,input{font-family:inherit}
+button,input,select,textarea{font-family:inherit}
 button{cursor:pointer;border:none;background:none;color:inherit}
-.shell{max-width:1180px;margin:0 auto;padding:26px 20px 70px}
+.shell{max-width:1180px;margin:0 auto;padding:22px 20px 40px}
 
-/* ---------- header ---------- */
-.hdr{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px}
-.hdr h1{font-size:23px;font-weight:800;letter-spacing:-.025em;margin:0}
-
-/* ---------- tabs ---------- */
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.tab{padding:11px 15px;border-radius:11px;background:#fff;border:1px solid var(--line);font-size:13px;font-weight:600;color:#4A5261;transition:.16s;text-align:left}
-.tab b{display:block;font-size:11px;font-weight:800;color:#9AA2B1;letter-spacing:.08em;margin-bottom:3px}
-.tab:hover{transform:translateY(-1px);box-shadow:0 6px 14px -10px rgba(0,0,0,.5)}
-.tab[aria-selected="true"]{background:#12161C;color:#fff;border-color:#12161C}
-.tab[aria-selected="true"] b{color:#8D96A6}
-.tab:focus-visible,.seg button:focus-visible{outline:2px solid #2F6FED;outline-offset:2px}
-
-/* ---------- description (상단) ---------- */
-.desc{background:#fff;border:1px solid var(--line);border-radius:15px;padding:22px 24px;margin-bottom:18px}
-.desc h3{margin:0 0 14px;font-size:16px;font-weight:800;letter-spacing:-.015em}
-.desc p{margin:0 0 16px;font-size:13.5px;line-height:2;color:#3D4552}
-.desc .split{display:grid;grid-template-columns:1fr 1fr;gap:22px}
-@media(max-width:760px){.desc .split{grid-template-columns:1fr}}
-.desc h4{margin:0 0 9px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#9AA2B1}
-.desc ul{margin:0;padding-left:17px;font-size:13px;line-height:2.1;color:#4A5261}
-.desc li{padding-left:2px}
-.desc li.warn{color:#B0562F}
-.desc .tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid #EFF1F5}
-.desc .tagrow span{font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:999px;background:#F2F3F6;color:#5A6272}
-
-/* ---------- view toggle ---------- */
 .viewbar{display:flex;align-items:center;gap:11px;margin-bottom:14px;flex-wrap:wrap}
 .seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px}
 .seg button{padding:8px 16px;border-radius:7px;font-size:12.5px;font-weight:700;color:#6B7484;transition:.14s}
 .seg button[aria-pressed="true"]{background:#12161C;color:#fff}
-.viewbar .note{font-size:12px;color:var(--mute)}
+.seg button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.viewbar .note{font-size:12px;color:var(--mute);line-height:1.7}
 .stage{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 14px 36px -20px rgba(18,22,28,.4)}
-.pane{display:none}.pane.on{display:block;animation:fade .28s ease}
+.pane{display:none}.pane.on{display:block;animation:fade .28s}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.mock{height:640px;display:flex;font-size:13px}
-@media(max-width:760px){.mock{height:560px}}
+.mock{height:660px;display:flex;font-size:13px}
+@media(max-width:760px){.mock{height:600px}}
 .scroll{overflow:auto;scroll-behavior:smooth}
 .scroll::-webkit-scrollbar{width:8px}
 .scroll::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:99px}
 
-/* ---------- 공통 채팅 엔진 ---------- */
-.msgs{display:flex;flex-direction:column;gap:12px;flex:1}
-.msg{display:flex;gap:9px;max-width:88%;animation:pop .26s cubic-bezier(.2,1.2,.4,1)}
-.msg.usr{align-self:flex-end;flex-direction:row-reverse}
+/* 노션 */
+.N{--nt:#37352F;--ntm:#9B9A97;--ntl:#EDECE9}
+.N .mock{background:#fff;position:relative;overflow:hidden;color:var(--nt)}
+.N .nside{width:224px;background:#F7F7F5;border-right:1px solid var(--ntl);flex:none;padding:12px 0;overflow:auto}
+.N .nws{display:flex;align-items:center;gap:8px;padding:6px 14px 12px;font-weight:600;font-size:13.5px}
+.N .nws .sq{width:20px;height:20px;border-radius:5px;background:#37352F;color:#fff;font-size:10px;display:grid;place-items:center;font-weight:700}
+.N .nitem{padding:5px 14px;color:#5F5E5B;display:flex;gap:8px;align-items:center;transition:.12s;width:100%;text-align:left;font-size:13px}
+.N .nitem:hover{background:#EFEEEB}
+.N .nitem.on{background:#EBEAE7;font-weight:600;color:#37352F}
+.N .nitem .em{width:16px;text-align:center;flex:none}
+.N .nsec{padding:16px 14px 5px;font-size:11px;color:var(--ntm);font-weight:600}
+.N .nsub{padding-left:30px}
+.N .npage{flex:1;min-width:0;display:flex;flex-direction:column}
+.N .ntop{padding:10px 22px;font-size:12px;color:var(--ntm);display:flex;gap:8px;flex:none}
+.N .nbody{padding:6px 56px 60px;overflow:auto;flex:1}
+@media(max-width:900px){.N .nbody{padding:6px 22px 60px}}
+.N .nicon{font-size:40px;line-height:1;margin-bottom:10px;display:inline-block}
+.N .nh1{font-size:31px;font-weight:800;letter-spacing:-.025em;margin:0 0 16px}
+.N .ncall{background:#F7F6F3;border-radius:4px;padding:13px 15px;display:flex;gap:11px;font-size:13px;line-height:1.7;margin-bottom:20px;color:#4A4844}
+.N .nh2{font-size:17.5px;font-weight:700;margin:24px 0 6px}
+.N .np{font-size:13.5px;line-height:1.9;margin:0 0 6px;color:#4A4844;padding:3px 7px;border-radius:4px;transition:background .4s}
+.N .np.hl{background:#FEF6D8;box-shadow:0 0 0 1px #F3E2A0}
+.N .np .mk{background:#FBEEC5;padding:1px 2px;border-radius:2px}
+
+/* 위젯 */
+.W{position:absolute;right:22px;bottom:22px;width:392px;max-width:calc(100% - 44px);height:calc(100% - 44px);max-height:560px;background:#fff;border-radius:18px;box-shadow:0 30px 70px -20px rgba(20,25,40,.45);border:1px solid #E3E6EE;overflow:hidden;display:flex;flex-direction:column;transition:.3s cubic-bezier(.2,1,.3,1);transform-origin:bottom right;z-index:6}
+.W.hide{opacity:0;transform:scale(.86) translateY(16px);pointer-events:none}
+@media(max-width:760px){.W{width:calc(100% - 28px);right:14px;bottom:14px;height:calc(100% - 28px)}}
+.wh{background:#12161C;color:#fff;padding:12px 15px;display:flex;align-items:center;gap:10px;flex:none}
+.wh .ico{width:30px;height:30px;border-radius:9px;background:var(--blue);display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
+.wh b{font-size:13.5px;display:block}
+.wh small{font-size:11px;color:#98A0AF;display:flex;align-items:center;gap:5px;margin-top:1px}
+.wh .dot{width:6px;height:6px;border-radius:99px;background:#38D39F;animation:pulse 1.9s infinite;flex:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.wh .x{margin-left:auto;color:#98A0AF;font-size:14px;padding:6px 8px;border-radius:7px}
+.wh .x:hover{background:#252A34;color:#fff}
+.wb{padding:15px;background:#FAFBFC;flex:1;min-height:0;display:flex;flex-direction:column;gap:11px;overflow:auto}
+.msg{display:flex;max-width:94%;animation:pop .26s cubic-bezier(.2,1.2,.4,1)}
+.msg.usr{align-self:flex-end}
 @keyframes pop{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-.msg .av{display:none;width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:800;place-items:center;flex:none}
-.msg .bx{border-radius:12px;padding:10px 13px;line-height:1.72;font-size:12.5px}
-.msg .bx b{font-weight:700}
-.msg .bx ul{margin:7px 0 0;padding-left:16px}
-.src{margin-top:9px;padding-top:9px;border-top:1px dashed rgba(0,0,0,.12);font-size:11px;opacity:.72}
-.chiprow{display:flex;gap:6px;flex-wrap:wrap;animation:pop .3s}
-.chip{font-size:11.5px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:#fff;color:#4A5261;transition:.14s}
-.chip:hover{background:#12161C;color:#fff;border-color:#12161C}
-.chip:active{transform:scale(.95)}
+.bx{border-radius:13px;padding:12px 13px;line-height:1.8;font-size:12.5px;background:#fff;border:1px solid #E6E8EE;border-top-left-radius:4px}
+.msg.usr .bx{background:var(--blue);color:#fff;border-color:var(--blue);border-radius:13px;border-bottom-right-radius:4px}
+.bx b{font-weight:700}
 .typing{display:flex;gap:4px;padding:12px 14px}
 .typing i{width:6px;height:6px;border-radius:99px;background:#B6BDC9;animation:bl 1.1s infinite}
 .typing i:nth-child(2){animation-delay:.16s}.typing i:nth-child(3){animation-delay:.32s}
 @keyframes bl{0%,60%,100%{opacity:.28;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
-.cform{display:flex;align-items:center;gap:9px}
-.cform input{flex:1;border:none;outline:none;background:transparent;font-size:12.5px;color:inherit;min-width:0}
-.cform input::placeholder{color:#A6AEBB}
-.cform .snd{width:30px;height:30px;border-radius:8px;color:#fff;display:grid;place-items:center;font-size:13px;flex:none;transition:.14s}
-.cform .snd:active{transform:scale(.9)}
+/* 안내 문구 + 페이지 카드 */
+.guide{margin-top:11px;font-size:12px;color:#6B7484;line-height:1.7}
+.pcard{margin-top:8px;display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid #E1E6F0;background:#F8FAFE;border-radius:11px;padding:11px 12px;transition:.15s}
+.pcard:hover{border-color:var(--blue);background:#F1F6FF;transform:translateY(-1px)}
+.pcard .pe{width:30px;height:30px;border-radius:8px;background:#fff;border:1px solid #E4E9F2;display:grid;place-items:center;font-size:15px;flex:none}
+.pcard .pt{flex:1;min-width:0}
+.pcard .pt b{display:block;font-size:12.5px;font-weight:700;color:#1F2937}
+.pcard .pt small{display:block;font-size:11px;color:#8A93A3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .ar{color:#9AA2B1;font-size:13px;flex:none}
+.eggnote{margin-top:11px;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#9AA2B1}
+.egglist{margin:6px 0 0;padding-left:16px;font-size:12.5px;line-height:1.85;color:#3D4552}
+.egglist li{margin-bottom:2px}
+.pcard.lock{background:#FAFAF9;border-color:#E7E5E0}
+.pcard.lock:hover{border-color:#CFCBC3;background:#F5F4F1;transform:none}
+.pcard.lock .pt b{color:#6B6A66}
+.pcard.lock:hover .ar{color:#8A857C}
+.pcard:hover .ar{color:var(--blue)}
+/* 관련 키워드 */
+.kwrap{margin-top:11px;padding-top:10px;border-top:1px dashed #E7EAF1}
+.kwrap .kl{font-size:12px;color:#6B7484;margin-bottom:8px;line-height:1.7}
+.kws{display:flex;gap:6px;flex-wrap:wrap}
+.kw{font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid #E1E5EC;background:#fff;color:#4A5261;transition:.14s}
+.kw:hover{background:#12161C;color:#fff;border-color:#12161C}
+.kw:active{transform:scale(.95)}
+.kw i{font-style:normal;color:#9AA2B1;margin-right:2px;font-weight:700}
+.kw:hover i{color:#98A0AF}
+/* 입력 */
+.wf{border-top:1px solid #EAECF1;background:#fff;flex:none}
+.cbox{margin:11px 13px 9px;border:1px solid #D9DEE7;border-radius:12px;padding:8px 9px 8px 13px;display:flex;align-items:center;gap:8px;transition:.15s}
+.cbox:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,111,237,.1)}
+.cbox input{flex:1;border:none;outline:none;background:transparent;font-size:12.5px;min-width:0}
+.cbox input::placeholder{color:#A6AEBB}
+.cbox .snd{width:31px;height:31px;border-radius:9px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:13px;flex:none}
+.cbox .snd:active{transform:scale(.9)}
+.wfoot{font-size:10.5px;color:#A6AEBB;text-align:center;padding:0 13px 11px;line-height:1.6}
+.launcher{position:absolute;right:22px;bottom:22px;width:56px;height:56px;border-radius:50%;background:#12161C;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;box-shadow:0 14px 28px -8px rgba(18,22,28,.65);transition:.2s;opacity:0;pointer-events:none;z-index:5}
+.launcher.show{opacity:1;pointer-events:auto}
+.launcher:hover{transform:scale(1.08)}
 
-/* =====================================================
-   1안 · 노션 위젯형
-   ===================================================== */
-.C{--nt-ink:#37352F;--nt-mute:#9B9A97;--nt-line:#EDECE9;--blue:#2F6FED}
-.C .mock{background:#fff;position:relative;overflow:hidden;color:var(--nt-ink)}
-.C .nside{width:228px;background:#F7F7F5;border-right:1px solid var(--nt-line);flex:none;padding:12px 0;font-size:13px}
-.C .nws{display:flex;align-items:center;gap:8px;padding:6px 14px 12px;font-weight:600;font-size:13.5px}
-.C .nws .sq{width:20px;height:20px;border-radius:5px;background:#37352F;color:#fff;font-size:10px;display:grid;place-items:center;font-weight:700}
-.C .nitem{padding:5px 14px;color:#5F5E5B;display:flex;gap:8px;align-items:center;cursor:pointer;transition:.12s}
-.C .nitem:hover{background:#EFEEEB}
-.C .nitem.on{background:#EBEAE7;font-weight:600;color:#37352F}
-.C .nitem .em{width:16px;text-align:center;font-size:13px}
-.C .nsec{padding:16px 14px 5px;font-size:11px;color:var(--nt-mute);font-weight:600}
-.C .nsub{padding-left:30px}
-.C .npage{flex:1;min-width:0;display:flex;flex-direction:column}
-.C .ntop{padding:10px 22px;font-size:12px;color:var(--nt-mute);display:flex;gap:8px}
-.C .nbody{padding:6px 58px 40px;overflow:auto;flex:1}
-@media(max-width:820px){.C .nbody{padding:6px 24px 40px}}
-.C .nicon{font-size:42px;line-height:1;margin-bottom:10px;display:inline-block}
-.C .nh1{font-size:33px;font-weight:800;letter-spacing:-.025em;margin:0 0 18px}
-.C .ncall{background:#F7F6F3;border-radius:4px;padding:14px 16px;display:flex;gap:11px;font-size:13.5px;line-height:1.7;margin-bottom:22px}
-.C .nh2{font-size:18.5px;font-weight:700;margin:26px 0 8px}
-.C .np{font-size:13.5px;line-height:1.8;margin:0 0 8px;color:#4A4844}
-.C .tog{border-bottom:1px solid var(--nt-line)}
-.C .tog .th{display:flex;gap:9px;align-items:center;font-size:13.5px;padding:7px 0;cursor:pointer}
-.C .tog .th:hover{background:#FAFAF9}
-.C .tog .ar{color:var(--nt-mute);font-size:10px;transition:.2s;display:inline-block}
-.C .tog.open .ar{transform:rotate(90deg)}
-.C .tog .tc{display:none;padding:0 0 12px 26px;font-size:13px;line-height:1.85;color:#5F5E5B}
-.C .tog.open .tc{display:block;animation:fade .22s}
-.C .ndb{border:1px solid var(--nt-line);border-radius:5px;margin-top:12px;font-size:13px;overflow:hidden}
-.C .ndb .hdr2{display:flex;background:#FBFBFA;border-bottom:1px solid var(--nt-line);color:var(--nt-mute);font-size:11.5px;font-weight:600}
-.C .ndb .hdr2 div,.C .ndb .rw div{padding:9px 12px}
-.C .ndb .rw{display:flex;border-bottom:1px solid var(--nt-line);color:#4A4844;cursor:pointer;transition:.12s}
-.C .ndb .rw:hover{background:#FAFAF9}
-.C .ndb .rw:last-child{border:none}
-.C .c1{width:46%}.C .c2{width:27%}.C .c3{width:27%}
-.C .ntag{font-size:11px;padding:2px 8px;border-radius:4px;background:#EEF1FB;color:#2F6FED;font-weight:600}
-.C .ntag.g{background:#EDF7F0;color:#1B7F4B}
-/* 위젯 */
-.C .widget{position:absolute;right:22px;bottom:22px;width:352px;max-width:calc(100% - 44px);background:#fff;border-radius:16px;box-shadow:0 26px 60px -18px rgba(20,25,40,.42);border:1px solid #E6E8EE;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100% - 44px);transition:.26s cubic-bezier(.2,1,.3,1);transform-origin:bottom right}
-.C .widget.hide{opacity:0;transform:scale(.85) translateY(14px);pointer-events:none}
-.C .wh{background:#12161C;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
-.C .wh .ico{width:28px;height:28px;border-radius:8px;background:var(--blue);display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
-.C .wh b{font-size:14px;font-weight:700;display:block}
-.C .wh small{font-size:11px;color:#98A0AF}
-.C .wh .x{margin-left:auto;color:#8C94A3;font-size:17px;line-height:1;padding:4px}
-.C .wh .x:hover{color:#fff}
-.C .wb{padding:15px;background:#FAFAFB;flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
-.C .msg .bx{background:#fff;border:1px solid #E6E8EE;border-top-left-radius:3px}
-.C .msg.usr .bx{background:var(--blue);color:#fff;border-color:var(--blue);border-radius:12px;border-bottom-right-radius:3px}
-.C .src b{color:var(--blue);cursor:pointer}
-.C .wf{padding:10px 13px;border-top:1px solid #EAECF1;background:#fff}
-.C .wf .snd{background:var(--blue)}
-.C .launcher{position:absolute;right:22px;bottom:22px;width:54px;height:54px;border-radius:50%;background:#12161C;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;box-shadow:0 14px 28px -8px rgba(18,22,28,.65);transition:.2s;opacity:0;pointer-events:none}
-.C .launcher.show{opacity:1;pointer-events:auto}
-.C .launcher:hover{transform:scale(1.08)}
-/* 1안 관리자 */
-.C .cadm{flex:1;display:flex;flex-direction:column;background:#fff;min-height:0}
-.C .cadm .ah{padding:15px 24px;border-bottom:1px solid #E6E8EE;display:flex;align-items:center;gap:14px}
-.C .cadm .ah h2{margin:0;font-size:16px;font-weight:800}
-.C .atabs{margin-left:auto;display:flex;gap:4px}
-.C .atabs button{font-size:12.5px;color:#8A93A3;padding:7px 12px;border-radius:8px;font-weight:600;transition:.14s}
-.C .atabs button:hover{background:#F4F6F9;color:#3F4756}
-.C .atabs button[aria-pressed="true"]{background:#EEF3FE;color:var(--blue)}
-.C .cbody{flex:1;padding:20px 24px;min-height:0;overflow:auto}
-.C .two{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
-@media(max-width:860px){.C .two{grid-template-columns:1fr}}
-.C .blk{border:1px solid #E6E8EE;border-radius:13px;padding:16px}
-.C .blk+.blk{margin-top:16px}
-.C .blk h4{margin:0 0 4px;font-size:12.5px;font-weight:800}
-.C .blk .hint{font-size:11.5px;color:#8A93A3;margin:0 0 12px;line-height:1.7}
-.C .syncrow{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #F0F2F6;font-size:12.5px}
-.C .syncrow:last-child{border:none}
-.C .syncrow .em{width:18px;text-align:center}
-.C .syncrow .nm{flex:1;font-weight:600;color:#2A3140}
-.C .syncrow .nm small{display:block;font-weight:400;font-size:11px;color:#9AA2B1;margin-top:2px}
-.badge{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;flex:none}
-.bd-ok{background:#E7F6EF;color:#0B7A55}
-.bd-wait{background:#FDF3E2;color:#8A5A00;cursor:pointer}
-.bd-wait:hover{background:#F7E6C6}
-.bd-off{background:#F1F3F6;color:#8A93A3}
-.bars{display:flex;flex-direction:column;gap:11px;margin-top:12px}
-.bar .t{display:flex;justify-content:space-between;margin-bottom:5px;color:#4A5261;font-size:12px}
-.bar .t i{font-style:normal;color:#8A93A3;font-weight:700}
-.track{height:8px;background:#F0F1F6;border-radius:99px;overflow:hidden}
-.fill{height:100%;background:#2F6FED;border-radius:99px;width:0;transition:width .9s cubic-bezier(.2,1,.3,1)}
-.fill.g{background:#22B573}.fill.o{background:#F0A020}
-.missrow{padding:11px 0;border-bottom:1px solid #F0F2F6;display:flex;align-items:center;gap:10px;font-size:12.5px;transition:.3s}
-.missrow:last-child{border:none}
-.missrow.go{opacity:0;transform:translateX(24px)}
-.missrow b{font-weight:600;color:#2A3140;flex:1}
-.missrow .cnt{font-size:11px;color:#fff;background:#E2564A;border-radius:6px;padding:3px 7px;font-weight:700;flex:none}
-.missrow .cnt.new{background:#2F6FED}
-.missrow .act{font-size:11.5px;font-weight:700;color:#2F6FED;border:1px solid #CFE0FD;background:#F6F9FF;padding:5px 10px;border-radius:7px;flex:none}
-.missrow .act:hover{background:#2F6FED;color:#fff}
-.C .embed{background:#14161C;color:#C7CCD8;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;border-radius:10px;padding:13px;line-height:1.8;margin-top:10px;position:relative}
-.C .embed .k{color:#6FA8FF}
-.C .embed .cp{position:absolute;right:9px;top:9px;font-size:10.5px;background:#252A34;color:#9AA4B4;padding:4px 8px;border-radius:6px;font-family:var(--font);font-weight:700}
-.C .embed .cp:hover{background:#2F6FED;color:#fff}
-/* 스위치 */
-.swrow{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #F0F2F6;font-size:12.5px}
-.swrow:last-child{border:none}
-.swrow span{flex:1;color:#3F4756}
-.sw{width:38px;height:22px;border-radius:99px;background:#D8DCE4;position:relative;flex:none;transition:.2s}
-.sw i{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
-.sw[aria-checked="true"]{background:#2F6FED}
-.sw[aria-checked="true"] i{left:19px}
-
-/* =====================================================
-   2안 · 업무 포털형
-   ===================================================== */
-.B{--acc:#0E9F6E;--bl:#E4E4DE}
-.B .mock{background:#FBFAF7;color:#16211C;flex-direction:column}
-.B .gnb{display:flex;align-items:center;gap:18px;padding:13px 26px;border-bottom:1px solid var(--bl);background:#fff;flex:none}
-.B .gnb .logo{font-weight:800;letter-spacing:-.02em}
-.B .gnb nav{display:flex;gap:5px;font-size:12.5px}
-.B .gnb nav button{padding:6px 11px;border-radius:8px;color:#6C7770;font-weight:600;transition:.14s}
-.B .gnb nav button:hover{background:#F2F2ED}
-.B .gnb nav button[aria-pressed="true"]{background:#16211C;color:#fff}
-.B .gnb .who{margin-left:auto;font-size:12px;color:#6C7770}
-.B .body{flex:1;padding:24px 26px;display:grid;grid-template-columns:1fr 336px;gap:22px;min-height:0}
-@media(max-width:860px){.B .body{grid-template-columns:1fr}}
-.B .hero h2{margin:0 0 6px;font-size:25px;font-weight:800;letter-spacing:-.03em;line-height:1.38}
-.B .hero p{margin:0 0 16px;font-size:13px;color:#6C7770}
-.B .ask{background:#fff;border:1px solid var(--bl);border-radius:14px;padding:12px 13px 12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 20px -16px rgba(0,0,0,.4)}
-.B .ask input{flex:1;border:none;outline:none;font-size:13.5px;background:transparent;min-width:0}
-.B .ask .go{background:var(--acc);color:#fff;font-size:12.5px;font-weight:700;padding:9px 15px;border-radius:9px;flex:none;transition:.15s}
-.B .ask .go:hover{background:#0B8A5F}
-.B .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:18px}
-@media(max-width:640px){.B .grid{grid-template-columns:repeat(2,1fr)}}
-.B .card{background:#fff;border:1px solid var(--bl);border-radius:13px;padding:14px;text-align:left;transition:.16s}
-.B .card:hover{transform:translateY(-2px);border-color:#B9DFCD;box-shadow:0 10px 22px -16px rgba(0,0,0,.5)}
-.B .card .ic{width:30px;height:30px;border-radius:9px;background:#EAF6F1;color:var(--acc);display:grid;place-items:center;font-size:15px;margin-bottom:9px}
-.B .card b{display:block;font-size:13px;margin-bottom:3px}
-.B .card small{font-size:11.5px;color:#8A938C;line-height:1.5;display:block}
-.B .sect{margin-top:22px}
-.B .sect h3{font-size:11.5px;letter-spacing:.08em;color:#8A938C;font-weight:800;margin:0 0 10px}
-.B .qlist{background:#fff;border:1px solid var(--bl);border-radius:13px;overflow:hidden}
-.B .q{padding:12px 15px;border-bottom:1px solid #F0F0EA;font-size:12.5px;display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;transition:.12s}
-.B .q:hover{background:#F7F7F3}
-.B .q:last-child{border:none}
-.B .q em{font-style:normal;color:#9AA39D;font-size:11.5px;flex:none}
-.B .rail{display:flex;flex-direction:column;min-height:0}
-.B .panel{background:#fff;border:1px solid var(--bl);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0}
-.B .panel .ph{padding:12px 15px;border-bottom:1px solid var(--bl);font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px}
-.B .live{width:7px;height:7px;border-radius:99px;background:var(--acc);animation:pulse 1.8s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.B .wb{padding:14px 15px;flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
-.B .msg .bx{background:#F4F5F2;border-top-left-radius:3px}
-.B .msg.usr .bx{background:var(--acc);color:#fff;border-bottom-right-radius:3px}
-.B .pf{padding:10px 13px;border-top:1px solid var(--bl)}
-.B .pf .snd{background:var(--acc)}
-/* 2안 관리자 */
-.B .admwrap{flex:1;display:flex;min-height:0}
-.B .anav{width:186px;background:#fff;border-right:1px solid var(--bl);padding:16px 0;flex:none;overflow:auto}
-.B .anav .g{font-size:10.5px;letter-spacing:.1em;color:#A9B1AB;font-weight:800;padding:10px 20px 6px}
-.B .anav button{display:block;width:100%;text-align:left;padding:9px 20px;font-size:12.5px;color:#5C665F;transition:.12s}
-.B .anav button:hover{background:#F5F5F1}
-.B .anav button[aria-pressed="true"]{background:#EAF6F1;color:#0B7A55;font-weight:700;box-shadow:inset 3px 0 0 var(--acc)}
-.B .acontent{flex:1;padding:22px 26px;min-width:0;overflow:auto}
-.B .acontent h2{margin:0 0 3px;font-size:17px;font-weight:800}
-.B .acontent .lead{font-size:12px;color:#8A938C;margin:0 0 18px;line-height:1.7}
-.B .editor{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-@media(max-width:860px){.B .editor{grid-template-columns:1fr}}
-.B .fld{margin-bottom:13px}
-.B .fld label{display:block;font-size:11.5px;font-weight:700;color:#6C7770;margin-bottom:5px}
-.B .fld input.inp,.B .fld textarea.inp,.B .fld .inp{width:100%;border:1px solid #DCDCD5;background:#fff;border-radius:9px;padding:10px 12px;font-size:12.5px;color:#3A443E;font-family:inherit;outline:none;transition:.14s;line-height:1.75}
-.B .fld input.inp:focus,.B .fld textarea.inp:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(14,159,110,.12)}
-.B .fld textarea.inp{min-height:96px;resize:vertical}
-.B .tagbox{display:flex;gap:6px;flex-wrap:wrap}
-.B .tagbox i{font-style:normal;font-size:11.5px;background:#EAF6F1;color:#0B7A55;padding:5px 10px;border-radius:7px;font-weight:600}
-.B .tagbox .add{font-size:11.5px;border:1px dashed #B9DFCD;color:#0B7A55;padding:5px 10px;border-radius:7px;font-weight:600}
-.B .tagbox .add:hover{background:#EAF6F1}
-.B .save{margin-top:10px;display:flex;gap:8px}
-.B .save .pri{background:var(--acc);color:#fff;padding:10px 17px;border-radius:9px;font-size:12.5px;font-weight:700;transition:.15s}
-.B .save .pri:hover{background:#0B8A5F}
-.B .save .sec{border:1px solid #DCDCD5;padding:10px 17px;border-radius:9px;font-size:12.5px;font-weight:600;color:#5C665F}
-.B .prevbox{background:#F7F7F3;border:1px dashed #D5D5CD;border-radius:12px;padding:14px}
-.B .prevbox+.prevbox{margin-top:14px}
-.B .prevbox .lb{font-size:10.5px;letter-spacing:.08em;color:#A9B1AB;font-weight:800;margin-bottom:10px}
-.B .pv{background:#fff;border:1px solid var(--bl);border-radius:11px;padding:12px 13px;font-size:12.5px;line-height:1.75}
-
-/* =====================================================
-   3안 · 메신저형
-   ===================================================== */
-.A{--nav:#131A26;--nav2:#1D2635;--blue:#2F6FED;--al:#E6E9EF}
-.A .mock{background:#fff;color:#1A202B}
-.A .side{width:246px;background:var(--nav);color:#C9D1DF;flex:none;display:flex;flex-direction:column}
+/* 관리자 */
+.A{--nav:#131A26;--al:#E6E9EF}
+.A .mock{background:#fff;color:#1A202B;position:relative;overflow:hidden}
+.A .side{width:236px;background:var(--nav);color:#C9D1DF;flex:none;display:flex;flex-direction:column;min-height:0}
 .A .side .brand{padding:16px 16px 12px;font-weight:800;color:#fff;font-size:14px;display:flex;align-items:center;gap:8px}
-.A .dot{width:8px;height:8px;border-radius:99px;background:#38D39F;animation:pulse 1.8s infinite}
-.A .side .newbtn{margin:0 12px 14px;padding:10px;border-radius:9px;background:var(--blue);color:#fff;font-weight:700;font-size:12.5px;transition:.15s}
-.A .side .newbtn:hover{background:#2560D8}
-.A .side .lbl{padding:8px 16px 6px;font-size:10.5px;letter-spacing:.1em;color:#69748A;font-weight:800}
-.A .side .item{display:block;width:100%;text-align:left;padding:9px 16px;font-size:12.5px;color:#AEB8C9;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.12s}
+.A .side .dot{width:8px;height:8px;border-radius:99px;background:#38D39F;animation:pulse 1.9s infinite;flex:none}
+.A .side .lbl{padding:10px 16px 6px;font-size:10.5px;letter-spacing:.1em;color:#69748A;font-weight:800}
+.A .side .item{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:9px 16px;font-size:12.5px;color:#AEB8C9;border-left:2px solid transparent;transition:.12s}
 .A .side .item:hover{background:#1A2333;color:#E4E9F1}
-.A .side .item[aria-pressed="true"]{background:var(--nav2);color:#fff;border-left-color:var(--blue)}
-.A .side .me{margin-top:auto;padding:14px 16px;border-top:1px solid #263043;font-size:12px;color:#8B96A9}
+.A .side .item[aria-pressed="true"]{background:#1D2635;color:#fff;border-left-color:var(--blue)}
+.A .side .item .em{width:15px;text-align:center;flex:none;font-size:12px}
+.A .side .sarea{flex:1;overflow:auto;min-height:0}
+.A .side .me{padding:13px 16px;border-top:1px solid #263043;font-size:12px;color:#8B96A9;flex:none}
 .A .main{flex:1;display:flex;flex-direction:column;min-width:0}
-.A .top{padding:14px 20px;border-bottom:1px solid var(--al);display:flex;align-items:center;justify-content:space-between;gap:12px}
-.A .top strong{font-size:14px}
-.A .top .meta{font-size:11.5px;color:#8A93A3;flex:none}
-.A .wb{flex:1;padding:20px;background:#FAFBFC;display:flex;flex-direction:column;gap:14px}
-.A .msg .av{display:grid;background:var(--blue);color:#fff}
-.A .msg.usr .av{background:#4A5261}
-.A .msg .bx{background:#fff;border:1px solid var(--al)}
-.A .msg.usr .bx{background:var(--blue);color:#fff;border-color:var(--blue)}
-.A .composer{padding:13px 20px 17px;border-top:1px solid var(--al);background:#fff}
-.A .cbox{border:1px solid #D6DBE4;border-radius:12px;padding:9px 11px 9px 14px;transition:.15s}
-.A .cbox:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,111,237,.1)}
-.A .cform .snd{background:var(--blue)}
-/* 3안 관리자 */
-.A .adm{flex:1;display:flex;flex-direction:column;min-width:0}
-.A .adm .ah{padding:16px 22px;border-bottom:1px solid var(--al)}
-.A .adm .ah h2{margin:0;font-size:16px;font-weight:800}
-.A .adm .ah p{margin:5px 0 0;font-size:12px;color:#8A93A3;line-height:1.7}
-.A .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:18px 22px}
+.A .ah{padding:15px 22px;border-bottom:1px solid var(--al);flex:none}
+.A .ah h2{margin:0;font-size:16px;font-weight:800}
+.A .ah p{margin:5px 0 0;font-size:12px;color:#8A93A3;line-height:1.75}
+.A .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 22px;flex:none}
 @media(max-width:700px){.A .kpis{grid-template-columns:repeat(2,1fr)}}
-.A .kpi{border:1px solid var(--al);border-radius:11px;padding:12px 14px}
+.A .kpi{border:1px solid var(--al);border-radius:11px;padding:11px 13px}
 .A .kpi small{font-size:11px;color:#8A93A3;font-weight:600}
-.A .kpi b{display:block;font-size:22px;font-weight:800;margin-top:5px;letter-spacing:-.02em}
+.A .kpi b{display:block;font-size:21px;font-weight:800;margin-top:4px}
 .A .kpi i{font-style:normal;font-size:11px;font-weight:700}
 .A .up{color:#0E9F6E}.A .down{color:#E2564A}
+.A .abody{flex:1;overflow:auto;min-height:0}
 .A table{width:100%;border-collapse:collapse;font-size:12.5px}
 .A th{text-align:left;font-size:11px;color:#8A93A3;font-weight:700;padding:9px 22px;border-bottom:1px solid var(--al);background:#FAFBFC}
-.A td{padding:11px 22px;border-bottom:1px solid #EFF1F5;vertical-align:middle}
+.A td{padding:11px 22px;border-bottom:1px solid #EFF1F5}
 .A tr.gone{opacity:0;transform:translateX(20px);transition:.35s}
 .pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;white-space:nowrap}
 .p-new{background:#FFF1E8;color:#C25A17}
 .p-ok{background:#E7F6EF;color:#0B7A55}
 .p-wait{background:#EEF2FB;color:#2F6FED}
-.A .lnk{color:#2F6FED;font-weight:700;font-size:12px;padding:5px 9px;border-radius:7px;transition:.14s}
+.A .lnk{color:#2F6FED;font-weight:700;font-size:12px;padding:5px 9px;border-radius:7px}
 .A .lnk:hover{background:#EEF3FE}
+.A .sec2{padding:18px 22px}
+.A .blk{border:1px solid var(--al);border-radius:12px;padding:14px 16px}
+.A .blk h4{margin:0 0 3px;font-size:12.5px;font-weight:800}
+.A .blk .hint{font-size:11.5px;color:#8A93A3;margin:0 0 12px;line-height:1.75}
+.A .syncrow,.A .krow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F0F2F6;font-size:12.5px;flex-wrap:wrap}
+.A .syncrow:last-child,.A .krow:last-child{border:none}
+.A .syncrow .em{width:18px;text-align:center;flex:none}
+.A .syncrow .nm{flex:1;font-weight:600;color:#2A3140}
+.A .syncrow .nm small{display:block;font-weight:400;font-size:11px;color:#9AA2B1;margin-top:2px}
+.A .krow .kn{font-weight:700;color:#2A3140;width:96px;flex:none}
+.A .krow .kk{display:flex;gap:5px;flex-wrap:wrap;flex:1;min-width:150px}
+.A .krow .kk i{font-style:normal;font-size:11px;font-weight:600;background:#F2F4F8;color:#5A6272;padding:4px 8px;border-radius:6px}
+.A .krow .kk .add{font-size:11px;border:1px dashed #C9D3E2;color:#5A79B5;padding:4px 8px;border-radius:6px;font-weight:700}
+.A .krow .src{font-size:11px;color:#8A93A3;flex:none}
+.badge{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;flex:none}
+.bd-ok{background:#E7F6EF;color:#0B7A55}
+.bd-wait{background:#FDF3E2;color:#8A5A00;cursor:pointer}
+.bd-off{background:#F1F3F6;color:#8A93A3}
+.A .drawer{position:absolute;right:0;top:0;bottom:0;width:368px;max-width:88%;background:#fff;border-left:1px solid var(--al);box-shadow:-18px 0 46px -26px rgba(10,14,22,.55);display:flex;flex-direction:column;transition:.26s cubic-bezier(.2,1,.3,1);z-index:8}
+.A .drawer.hide{transform:translateX(102%)}
+.A .dh2{padding:14px 18px;border-bottom:1px solid var(--al);flex:none;position:relative}
+.A .dh2 b{font-size:14px;font-weight:800;display:block}
+.A .dh2 small{font-size:11.5px;color:#8A93A3;display:block;margin-top:4px}
+.A .dh2 .x{position:absolute;right:12px;top:12px;color:#9AA2B1;font-size:16px;padding:4px 6px;border-radius:6px}
+.A .db{padding:16px 18px;overflow:auto;flex:1;min-height:0}
+.A .fld{margin-bottom:14px}
+.A .fld label{display:block;font-size:11.5px;font-weight:700;color:#5A6272;margin-bottom:6px}
+.A .fld .inp{width:100%;border:1px solid #D8DDE6;border-radius:9px;padding:10px 12px;font-size:12.5px;color:#3A4150;outline:none;line-height:1.8;background:#fff}
+.A .fld textarea.inp{min-height:100px;resize:vertical}
+.A .fld .inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,111,237,.12)}
+.A .fld .help{font-size:11px;color:#9AA2B1;margin-top:6px;line-height:1.7}
+.A .df{padding:13px 18px;border-top:1px solid var(--al);display:flex;gap:8px;flex:none}
+.A .pri{background:var(--blue);color:#fff;padding:10px 16px;border-radius:9px;font-size:12.5px;font-weight:700}
+.A .sec{border:1px solid #D8DDE6;padding:10px 16px;border-radius:9px;font-size:12.5px;font-weight:600;color:#5A6272}
 
-/* ---------- 토스트 ---------- */
 #toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);background:#12161C;color:#fff;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:99;box-shadow:0 14px 30px -12px rgba(0,0,0,.6);max-width:88vw;text-align:center}
 #toast.on{opacity:1;transform:translate(-50%,0)}
-
-@media(prefers-reduced-motion:reduce){
-  .pane.on,.msg,.chiprow{animation:none}
-}
+@media(prefers-reduced-motion:reduce){.pane.on,.msg{animation:none}}
 </style>
-
-<div class="shell" id="shell">
-
-  <div class="hdr">
-    <div>
-      <h1 id="bigTitle">HR 챗봇 시안 3종</h1>
-    </div>
-  </div>
-
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" aria-selected="true" data-s="C"><b>1안</b>인트라넷 위젯형 · 노션 연동</button>
-    <button class="tab" role="tab" aria-selected="false" data-s="B"><b>2안</b>업무 포털형</button>
-    <button class="tab" role="tab" aria-selected="false" data-s="A"><b>3안</b>대화 중심 · 메신저형</button>
-  </div>
-
-  <div class="desc" id="desc"></div>
+</head>
+<body>
+<div class="shell">
 
   <div class="viewbar">
-    <div class="seg">
+    <div class="seg" id="segbar">
       <button data-v="user" aria-pressed="true">사용자 화면</button>
       <button data-v="admin" aria-pressed="false">관리자 화면</button>
     </div>
-    <span class="note">채팅창에 직접 입력해 보세요. 답을 못 찾은 질문은 관리자 화면 미답변 목록에 쌓입니다.</span>
   </div>
 
   <div class="stage">
 
-    <!-- ================= 1안 사용자 ================= -->
-    <div class="pane on C" data-pane="C-user">
+    <div class="pane on N" data-pane="user">
       <div class="mock">
-        <aside class="nside scroll">
+        <aside class="nside">
           <div class="nws"><span class="sq">S</span>시몬스 워크스페이스</div>
-          <div class="nitem"><span class="em">🔍</span>검색</div>
-          <div class="nitem"><span class="em">🏠</span>홈</div>
+          <button class="nitem"><span class="em">🔍</span>검색</button>
+          <button class="nitem"><span class="em">🏠</span>홈</button>
           <div class="nsec">워크스페이스</div>
-          <div class="nitem"><span class="em">📌</span>공지사항</div>
-          <div class="nitem on"><span class="em">🧭</span>HR 가이드</div>
-          <div class="nitem nsub">근태 · 연차</div>
-          <div class="nitem nsub">급여 · 정산</div>
-          <div class="nitem nsub">복리후생</div>
-          <div class="nitem nsub">증명서 발급</div>
-          <div class="nitem"><span class="em">🗂</span>인사부문 내부</div>
-          <div class="nitem"><span class="em">📚</span>온보딩</div>
-          <div class="nsec">개인 페이지</div>
-          <div class="nitem"><span class="em">📝</span>최예솔의 업무노트</div>
+          <button class="nitem"><span class="em">📌</span>공지사항</button>
+          <button class="nitem on" id="navRoot"><span class="em">🧭</span>HR 가이드</button>
+          <button class="nitem nsub" data-page="attend">근태 · 연차</button>
+          <button class="nitem nsub" data-page="pay">급여 · 정산</button>
+          <button class="nitem nsub" data-page="benefit">복리후생</button>
+          <button class="nitem nsub" data-page="cert">증명서 발급</button>
+          <button class="nitem nsub" data-page="work">근무 형태</button>
+          <button class="nitem"><span class="em">🗂</span>인사부문 내부</button>
         </aside>
         <div class="npage">
-          <div class="ntop"><span>HR 가이드</span><span>/</span><span>근태 · 연차</span></div>
-          <div class="nbody scroll">
-            <span class="nicon" id="nIcon">🧭</span>
-            <h1 class="nh1">근태 · 연차 가이드</h1>
-            <div class="ncall"><span>💡</span><div>이 페이지는 취업규칙 제32조를 기준으로 작성되었습니다.<br>개인별 잔여 일수는 오른쪽 아래 <b>HR 챗봇</b>에 물어보세요.</div></div>
-
-            <h2 class="nh2">연차 부여 기준</h2>
-            <p class="np">입사 1년 미만은 매월 개근 시 1일씩, 1년 이상은 연 15일이 부여되며 3년마다 1일씩 가산됩니다.</p>
-
-            <h2 class="nh2">이월과 소멸</h2>
-            <p class="np">미사용 연차는 최대 5일까지 다음 연도 6월 30일까지 이월됩니다. 이후 잔여분은 자동 소멸되며 수당으로 지급되지 않습니다.</p>
-
-            <div class="tog"><div class="th"><span class="ar">▶</span>반차 · 반반차 사용 규정</div><div class="tc">반차는 4시간, 반반차는 2시간 단위로 사용합니다. 반반차는 하루 1회, 월 4회까지 쓸 수 있어요.</div></div>
-            <div class="tog"><div class="th"><span class="ar">▶</span>경조 휴가 일수표</div><div class="tc">본인 결혼 5일 · 자녀 출생 10일 · 부모 사망 5일 · 조부모 사망 3일</div></div>
-            <div class="tog"><div class="th"><span class="ar">▶</span>휴직 중 연차 산정</div><div class="tc">육아휴직 기간은 근속기간에 포함되어 출근한 것으로 봅니다. 다만 복직 시점에 따라 일수가 달라지니 챗봇에 개별 확인하세요.</div></div>
-
-            <h2 class="nh2">자주 묻는 질문</h2>
-            <div class="ndb">
-              <div class="hdr2"><div class="c1">질문</div><div class="c2">분류</div><div class="c3">최종 수정</div></div>
-              <div class="rw" data-ask="연차 이월은 며칠까지 되나요?"><div class="c1">연차 이월은 며칠까지 되나요?</div><div class="c2"><span class="ntag">근태</span></div><div class="c3">2026-07-28</div></div>
-              <div class="rw" data-ask="반차 쓴 날 야근하면 수당이 나오나요?"><div class="c1">반차 쓴 날 야근하면 수당이 나오나요?</div><div class="c2"><span class="ntag">근태</span></div><div class="c3">2026-07-14</div></div>
-              <div class="rw" data-ask="퇴사 시 남은 연차는 어떻게 정산되나요?"><div class="c1">퇴사 시 남은 연차는 어떻게 정산되나요?</div><div class="c2"><span class="ntag g">퇴직</span></div><div class="c3">2026-06-30</div></div>
-            </div>
-          </div>
+          <div class="ntop" id="nCrumb"></div>
+          <div class="nbody scroll" id="nBody"></div>
         </div>
 
-        <div class="widget" id="cWidget">
-          <div class="wh"><span class="ico">HR</span><div><b>HR 챗봇</b><small>노션 HR 가이드를 근거로 답합니다</small></div><button class="x" id="cClose">✕</button></div>
-          <div class="wb scroll" data-chat="c"></div>
+        <div class="W" id="widget">
+          <div class="wh">
+            <span class="ico">HR</span>
+            <div><b>HR 도우미</b><small><span class="dot"></span>노션 HR 가이드 · 8분 전 동기화</small></div>
+            <button class="x" id="wClose">✕</button>
+          </div>
+          <div class="wb scroll" id="chat"></div>
           <div class="wf">
-            <form class="cform" data-form="c"><input placeholder="궁금한 걸 입력하세요"><button class="snd" type="submit">↑</button></form>
+            <form class="cbox" id="form">
+              <input id="inp" placeholder="궁금한 걸 편하게 적어 주세요" autocomplete="off">
+              <button class="snd" type="submit">↑</button>
+            </form>
+            <div class="wfoot">노션 문서에 있는 내용만 안내합니다.</div>
           </div>
         </div>
-        <button class="launcher" id="cOpen">HR</button>
+        <button class="launcher" id="launcher">HR</button>
       </div>
     </div>
 
-    <!-- ================= 1안 관리자 ================= -->
-    <div class="pane C" data-pane="C-admin">
-      <div class="mock">
-        <div class="cadm">
-          <div class="ah">
-            <h2>HR 챗봇 관리자</h2>
-            <div class="atabs" id="cTabs">
-              <button aria-pressed="true" data-t="sync">노션 연동</button>
-              <button aria-pressed="false" data-t="miss">미답변 질문</button>
-              <button aria-pressed="false" data-t="show">노출 설정</button>
-            </div>
-          </div>
-          <div class="cbody scroll">
-
-            <div data-cpane="sync">
-              <div class="two">
-                <div>
-                  <div class="blk">
-                    <h4>연결된 노션 페이지</h4>
-                    <p class="hint">노션 문서를 그대로 지식 소스로 씁니다. 노션에서 문서를 고치면 챗봇 답변도 함께 바뀌므로, 답변을 따로 관리하지 않아도 됩니다.</p>
-                    <div class="syncrow"><span class="em">🧭</span><span class="nm">HR 가이드<small>하위 12개 페이지 · 최근 동기화 8분 전</small></span><span class="badge bd-ok">동기화됨</span></div>
-                    <div class="syncrow"><span class="em">📌</span><span class="nm">공지사항<small>최근 30일 문서만 · 최근 동기화 8분 전</small></span><span class="badge bd-ok">동기화됨</span></div>
-                    <div class="syncrow"><span class="em">📚</span><span class="nm">온보딩<small>노션에서 수정 감지 · 반영 대기</small></span><button class="badge bd-wait" data-sync>지금 반영</button></div>
-                    <div class="syncrow"><span class="em">🗂</span><span class="nm">인사부문 내부<small>내부 문서 · 챗봇 공개 안 함</small></span><span class="badge bd-off">제외</span></div>
-                  </div>
-                </div>
-                <div>
-                  <div class="blk">
-                    <h4>분류별 질문 비중 <span style="font-weight:500;color:#9AA2B1">· 최근 30일</span></h4>
-                    <div class="bars">
-                      <div class="bar"><div class="t"><span>근태 · 연차</span><i>38%</i></div><div class="track"><div class="fill" data-w="38"></div></div></div>
-                      <div class="bar"><div class="t"><span>급여 · 정산</span><i>24%</i></div><div class="track"><div class="fill" data-w="24"></div></div></div>
-                      <div class="bar"><div class="t"><span>복리후생</span><i>19%</i></div><div class="track"><div class="fill g" data-w="19"></div></div></div>
-                      <div class="bar"><div class="t"><span>증명서</span><i>12%</i></div><div class="track"><div class="fill g" data-w="12"></div></div></div>
-                      <div class="bar"><div class="t"><span>기타</span><i>7%</i></div><div class="track"><div class="fill o" data-w="7"></div></div></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div data-cpane="miss" hidden>
-              <div class="blk">
-                <h4>답을 못 준 질문 <span id="missCount" style="color:#E2564A">· 4건</span></h4>
-                <p class="hint">여기 뜬 질문은 노션에 해당 내용이 없다는 뜻입니다. 노션에 문단을 추가하고 <b>반영 완료</b>를 누르면 목록에서 사라집니다.<br>사용자 화면에서 챗봇이 답하지 못한 질문도 실시간으로 여기에 쌓입니다.</p>
-                <div id="missList"></div>
-              </div>
-            </div>
-
-            <div data-cpane="show" hidden>
-              <div class="two">
-                <div class="blk">
-                  <h4>어디에 띄울지</h4>
-                  <p class="hint">켜고 끄면 사용자 화면에 바로 반영됩니다.</p>
-                  <div class="swrow"><span>노션 워크스페이스 전체</span><button class="sw" role="switch" aria-checked="true"><i></i></button></div>
-                  <div class="swrow"><span>HR 가이드 진입 시 자동 인사</span><button class="sw" role="switch" aria-checked="true"><i></i></button></div>
-                  <div class="swrow"><span>개인 페이지</span><button class="sw" role="switch" aria-checked="false"><i></i></button></div>
-                  <div class="swrow"><span>모바일 노션 앱</span><button class="sw" role="switch" aria-checked="true"><i></i></button></div>
-                </div>
-                <div class="blk">
-                  <h4>공개 범위</h4>
-                  <p class="hint">인사부문 내부 문서는 기본 제외되어 있습니다.</p>
-                  <div class="swrow"><span>정규직</span><button class="sw" role="switch" aria-checked="true"><i></i></button></div>
-                  <div class="swrow"><span>계약직 · 파견</span><button class="sw" role="switch" aria-checked="true"><i></i></button></div>
-                  <div class="swrow"><span>휴직자</span><button class="sw" role="switch" aria-checked="false"><i></i></button></div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= 2안 사용자 ================= -->
-    <div class="pane B" data-pane="B-user">
-      <div class="mock">
-        <div class="gnb">
-          <span class="logo">시몬스 HR Desk</span>
-          <nav id="bNav">
-            <button aria-pressed="true">홈</button><button>근태</button><button>급여</button><button>증명서</button><button>복리후생</button>
-          </nav>
-          <span class="who">최예솔 님 · 인사부문</span>
-        </div>
-        <div class="body">
-          <div class="scroll">
-            <div class="hero">
-              <h2>무엇이든 물어보세요.<br>HR 규정, 신청 방법, 내 정보까지.</h2>
-              <p>연차·급여·증명서 관련 질문의 80%는 여기서 바로 해결됩니다.</p>
-              <form class="ask" id="bAsk"><input placeholder="예) 재택근무 신청은 며칠 전까지 해야 하나요?"><button class="go" type="submit">질문하기</button></form>
-            </div>
-            <div class="grid">
-              <button class="card" data-ask="연차 이월 기준이 어떻게 되나요?"><div class="ic">◷</div><b>연차·근태</b><small>잔여일수, 이월, 반차 규정</small></button>
-              <button class="card" data-ask="급여일이 언제인가요?"><div class="ic">₩</div><b>급여·정산</b><small>급여일, 수당, 연말정산</small></button>
-              <button class="card" data-ask="건강검진 언제까지 받아야 하나요?"><div class="ic">◈</div><b>복리후생</b><small>건강검진, 경조사, 동호회</small></button>
-              <button class="card" data-ask="재직증명서 어떻게 발급받나요?"><div class="ic">▤</div><b>증명서 발급</b><small>재직·경력·원천징수</small></button>
-              <button class="card" data-ask="육아휴직 복직 후 연차는 어떻게 산정되나요?"><div class="ic">◑</div><b>휴직·복직</b><small>육아휴직, 병가, 복직 절차</small></button>
-              <button class="card" data-ask="재택근무 신청 절차 알려주세요"><div class="ic">◇</div><b>근무 형태</b><small>재택, 유연근무, 출장</small></button>
-            </div>
-            <div class="sect">
-              <h3>이번 주 많이 묻는 질문</h3>
-              <div class="qlist">
-                <button class="q" data-ask="연차 이월은 며칠까지 되나요?"><span>연차 이월은 며칠까지 되나요?</span><em>142회</em></button>
-                <button class="q" data-ask="재직증명서 어떻게 발급받나요?"><span>재직증명서 어떻게 발급받나요?</span><em>98회</em></button>
-                <button class="q" data-ask="건강검진 언제까지 받아야 하나요?"><span>건강검진은 언제까지 받아야 하나요?</span><em>76회</em></button>
-                <button class="q" data-ask="경조사비 언제까지 신청해요?"><span>경조사비 신청은 사유 발생 후 언제까지?</span><em>54회</em></button>
-              </div>
-            </div>
-          </div>
-          <div class="rail">
-            <div class="panel">
-              <div class="ph"><span class="live"></span> HR 도우미</div>
-              <div class="wb scroll" data-chat="b"></div>
-              <div class="pf"><form class="cform" data-form="b"><input placeholder="메시지 입력"><button class="snd" type="submit">↑</button></form></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= 2안 관리자 ================= -->
-    <div class="pane B" data-pane="B-admin">
-      <div class="mock">
-        <div class="gnb">
-          <span class="logo">시몬스 HR Desk 관리자</span>
-          <span class="who">최예솔 · 인사부문</span>
-        </div>
-        <div class="admwrap">
-          <div class="anav" id="bNav2">
-            <div class="g">답변 관리</div>
-            <button aria-pressed="true">답변 카드</button>
-            <button>분류 체계</button>
-            <button>첨부 문서</button>
-            <div class="g">운영</div>
-            <button>미답변 큐</button>
-            <button>검수 대기</button>
-            <div class="g">분석</div>
-            <button>질문 추이</button>
-            <button>도움됨 비율</button>
-          </div>
-          <div class="acontent">
-            <h2>답변 카드 편집</h2>
-            <p class="lead">규정 원문을 그대로 넣지 않고, 구성원이 읽을 문장으로 카드를 만들어 관리합니다.<br>저장하면 챗봇 답변과 포털 FAQ에 동시에 반영됩니다. 아래에서 직접 고쳐 보세요.</p>
-            <div class="editor">
-              <div>
-                <div class="fld"><label>대표 질문</label><input class="inp" id="bQ" value="건강검진은 언제까지 받아야 하나요?"></div>
-                <div class="fld"><label>같은 뜻으로 묻는 표현</label>
-                  <div class="tagbox" id="bTags"><i>검진 기한</i><i>종합검진 언제</i><i>건강검진 마감</i><button class="add" id="bAddTag">+ 추가</button></div>
-                </div>
-                <div class="fld"><label>답변 본문</label>
-                  <textarea class="inp" id="bA">올해 검진 대상자는 12월 31일까지 수검을 완료해야 합니다. 미수검 시 다음 해로 이월되지 않습니다.
-
-예약: 그룹웨어 &gt; 복리후생 &gt; 건강검진</textarea>
-                </div>
-                <div class="fld"><label>공개 대상</label><input class="inp" value="전 직원 · 계약직 포함"></div>
-                <div class="save"><button class="pri" id="bSave">저장하고 공개</button><button class="sec" id="bTemp">임시 저장</button></div>
-              </div>
-              <div>
-                <div class="prevbox">
-                  <div class="lb">구성원에게 보이는 모습</div>
-                  <div class="pv" id="bPrev"></div>
-                </div>
-                <div class="prevbox">
-                  <div class="lb">최근 30일 성과</div>
-                  <div style="font-size:12.5px;line-height:2;color:#4A5261">
-                    노출 <b>412회</b> · 도움됨 <b>89%</b><br>
-                    이 카드 공개 후 담당자 문의 <b>-31%</b>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= 3안 사용자 ================= -->
-    <div class="pane A" data-pane="A-user">
-      <div class="mock">
-        <aside class="side">
-          <div class="brand"><span class="dot"></span>시몬스 HR 도우미</div>
-          <button class="newbtn" id="aNew">+ 새 질문하기</button>
-          <div class="lbl">최근 대화</div>
-          <div id="aHist"></div>
-          <div class="lbl">바로가기</div>
-          <button class="item" data-ask="내 연차 며칠 남았어요?">내 연차 조회</button>
-          <button class="item" data-ask="담당자에게 연결해 주세요">HR 담당자 연결</button>
-          <div class="me">최예솔 · 인사부문</div>
-        </aside>
-        <div class="main">
-          <div class="top"><strong id="aTitle">연차 이월 기준이 어떻게 되나요</strong><span class="meta">답변 근거 · 취업규칙 v4.2</span></div>
-          <div class="wb scroll" data-chat="a"></div>
-          <div class="composer">
-            <div class="cbox"><form class="cform" data-form="a"><input placeholder="궁금한 점을 입력하세요"><button class="snd" type="submit">↑</button></form></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= 3안 관리자 ================= -->
-    <div class="pane A" data-pane="A-admin">
+    <div class="pane A" data-pane="admin">
       <div class="mock">
         <aside class="side">
           <div class="brand"><span class="dot"></span>HR 도우미 관리자</div>
-          <div class="lbl">운영</div>
-          <button class="item" aria-pressed="true">답변 못한 질문</button>
-          <button class="item">지식 문서</button>
-          <button class="item">답변 규칙</button>
-          <div class="lbl">분석</div>
-          <button class="item">질문 통계</button>
-          <button class="item">만족도</button>
+          <div class="sarea scroll">
+            <div class="lbl">운영</div>
+            <button class="item nav" data-t="miss" aria-pressed="true"><span class="em">◎</span><span class="t">안내 못한 질문</span></button>
+            <button class="item nav" data-t="kw"><span class="em">#</span><span class="t">키워드 · 페이지 연결</span></button>
+            <button class="item nav" data-t="sync"><span class="em">🧭</span><span class="t">노션 연동</span></button>
+          </div>
           <div class="me">최예솔 · 인사부문</div>
         </aside>
-        <div class="adm">
+        <div class="main">
           <div class="ah">
-            <h2>답변 못한 질문</h2>
-            <p>챗봇이 근거를 찾지 못했거나 구성원이 "도움이 안 됐어요"를 누른 질문입니다.<br>여기서 답을 달면 곧바로 지식 문서로 저장됩니다.</p>
+            <h2 id="aTitle">안내 못한 질문</h2>
+            <p id="aLead">노션에 해당 내용이 없어 페이지를 안내하지 못한 질문입니다. <b>문단을 추가</b>하면 다음부터 그 페이지로 안내합니다.</p>
           </div>
           <div class="kpis">
             <div class="kpi"><small>이번 주 질문</small><b>1,284</b><i class="up">▲ 12%</i></div>
-            <div class="kpi"><small>자동 해결률</small><b>81%</b><i class="up">▲ 4%p</i></div>
-            <div class="kpi"><small>미답변</small><b id="aMiss">6</b><i class="down">▲ 신규</i></div>
-            <div class="kpi"><small>평균 응답</small><b>1.8초</b><i class="up">▼ 0.3초</i></div>
+            <div class="kpi"><small>페이지 안내 성공</small><b>84%</b><i class="up">▲ 5%p</i></div>
+            <div class="kpi"><small>안내 못함</small><b id="aMiss">4</b><i class="down">▲ 신규</i></div>
+            <div class="kpi"><small>카드 클릭률</small><b>62%</b><i class="up">▲ 8%p</i></div>
           </div>
-          <div class="scroll" style="flex:1">
-            <table>
-              <thead><tr><th style="width:44%">질문</th><th>분류</th><th>횟수</th><th>상태</th><th></th></tr></thead>
-              <tbody id="aTable"></tbody>
-            </table>
+          <div class="abody scroll">
+            <div data-p="miss">
+              <table>
+                <thead><tr><th style="width:46%">질문</th><th>횟수</th><th>상태</th><th></th></tr></thead>
+                <tbody id="aTable"></tbody>
+              </table>
+            </div>
+            <div data-p="kw" hidden><div class="sec2"><div class="blk">
+              <h4>키워드 · 페이지 연결</h4>
+              <p class="hint">구성원이 쓰는 표현을 노션 페이지에 걸어 둡니다. 여기 등록된 표현이 답변 아래 #관련 키워드로도 나옵니다.</p>
+              <div id="kwList"></div>
+            </div></div></div>
+            <div data-p="sync" hidden><div class="sec2"><div class="blk">
+              <h4>연결된 노션 페이지</h4>
+              <p class="hint">노션에서 문서를 고치면 안내 내용도 같이 바뀝니다. 답변을 따로 관리하지 않습니다.</p>
+              <div class="syncrow"><span class="em">🧭</span><span class="nm">HR 가이드<small>하위 12개 페이지 · 8분 전 동기화</small></span><span class="badge bd-ok">동기화됨</span></div>
+              <div class="syncrow"><span class="em">📌</span><span class="nm">공지사항<small>최근 30일 문서만</small></span><span class="badge bd-ok">동기화됨</span></div>
+              <div class="syncrow"><span class="em">📚</span><span class="nm">온보딩<small>노션에서 수정 감지 · 반영 대기</small></span><button class="badge bd-wait" data-sync>지금 반영</button></div>
+              <div class="syncrow"><span class="em">🗂</span><span class="nm">인사부문 내부<small>내부 문서 · 챗봇 공개 안 함</small></span><span class="badge bd-off">제외</span></div>
+            </div></div></div>
           </div>
+
+          <aside class="drawer hide" id="drawer">
+            <div class="dh2"><b>노션에 문단 추가</b><small id="drQ"></small><button class="x" id="drX">✕</button></div>
+            <div class="db">
+              <div class="fld"><label>어느 페이지에 넣을까요</label>
+                <select class="inp" id="drPage">
+                  <option>HR 가이드 / 근태 · 연차</option><option>HR 가이드 / 급여 · 정산</option>
+                  <option>HR 가이드 / 복리후생</option><option>HR 가이드 / 증명서 발급</option>
+                  <option>HR 가이드 / 근무 형태</option>
+                </select></div>
+              <div class="fld"><label>추가할 문단</label><textarea class="inp" id="drBody"></textarea>
+                <div class="help">구성원이 읽고 바로 이해할 문장으로 적어 주세요. 이 문단이 그대로 안내됩니다.</div></div>
+            </div>
+            <div class="df"><button class="pri" id="drSave">노션에 저장</button><button class="sec" id="drCancel">취소</button></div>
+          </aside>
         </div>
       </div>
     </div>
@@ -645,255 +314,338 @@ button{cursor:pointer;border:none;background:none;color:inherit}
 <div id="toast"></div>
 
 <script>
-/* ============ 설명 데이터 ============ */
-const DESC={
- C:{t:"1안 · 인트라넷 위젯형 (노션 연동)",
-  p:"별도 사이트를 만들지 않고, 노션 워크스페이스 오른쪽 아래에 챗봇을 띄웁니다.<br><br>핵심은 <b>노션 문서 자체가 지식 소스</b>라는 점입니다. 인사부문이 HR 가이드 페이지를 고치면 챗봇 답변도 같이 바뀌므로, 답변을 따로 관리할 필요가 없습니다.<br><br>관리자가 하는 일이 '챗봇 관리'가 아니라 '노션 정리'로 수렴합니다.",
-  good:["구성원이 새 사이트를 기억할 필요 없음 — 도입 저항 최소","답변마다 근거가 된 노션 페이지를 링크로 제시","운영 부담이 세 안 중 가장 낮음","답을 못 준 질문 목록 = 노션에 빠진 문단 목록"],
-  bad:["화면이 좁아 긴 표·첨부 안내에는 불리","노션이 곧 품질 — 문서가 부실하면 챗봇도 부실","노션 밖 데이터(연차 잔여일수 등)는 별도 연동 필요"],
-  g:["도입 장벽 최저","이중 관리 없음","화면 공간 제약"]},
- B:{t:"2안 · 업무 포털형",
-  p:"챗봇을 HR 포털 안에 넣은 형태입니다. 왼쪽엔 연차·급여·증명서 카테고리 카드와 인기 질문이, 오른쪽엔 상시 대화창이 붙습니다.<br><br>관리자는 규정 원문이 아니라 <b>답변 카드</b>를 편집합니다. 대표 질문 + 같은 뜻의 표현 + 답변 본문 + 공개 대상을 한 장으로 묶어 관리하는 방식입니다.<br><br>챗봇 답변과 FAQ가 같은 데이터를 쓰기 때문에 두 번 고칠 일이 없습니다.",
-  good:["질문을 떠올리지 못하는 구성원도 카드를 눌러 진입","답변별 노출·도움됨 수치가 나와 개선 지점이 명확","HR 포털 자체를 만들 계획이면 확장성이 가장 좋음","공개 대상을 답변 단위로 나눌 수 있음"],
-  bad:["콘텐츠를 처음 채우는 초기 비용이 가장 큼","구성원이 새 사이트에 들어와야 함 — 진입 유도 필요","답변 카드가 늘어나면 분류 체계 관리가 따로 필요"],
-  g:["콘텐츠 관리 체계적","FAQ 겸용","중장기 확장 유리"]},
- A:{t:"3안 · 대화 중심 메신저형",
-  p:"화면 전체가 대화창입니다. 구성원은 별도 안내 없이 그냥 물어보면 되고, 왼쪽에 지난 대화가 쌓입니다.<br><br>관리자 페이지의 중심은 <b>답변 못한 질문 큐</b>입니다. 운영자가 매일 그 목록만 비우면 챗봇이 저절로 똑똑해지는 구조라, 운영 루틴이 가장 단순합니다.<br><br>세 안 중 가장 빨리 착수할 수 있습니다.",
-  good:["구성원 학습 비용이 가장 낮음","답변 근거 문서를 함께 보여줘 신뢰 확보","'미답변 → 답변 작성 → 지식 저장' 한 줄 운영 흐름","대화 맥락이 이어져 되묻기가 자연스러움"],
-  bad:["무엇을 물어야 할지 모르는 사람에겐 빈 화면이 부담","규정 전체를 훑어보는 용도로는 부적합","FAQ·공지 같은 정적 콘텐츠를 담을 곳이 없음"],
-  g:["착수 가장 빠름","운영 흐름 단순","진입 유도 약함"]}
+/* ========== 노션 페이지 ========== */
+const PAGES={
+ attend:{em:"🧭",title:"근태 · 연차 가이드",crumb:["HR 가이드","근태 · 연차"],
+  call:"취업규칙 제32조 기준입니다. 개인별 잔여 일수는 오른쪽 아래 <b>HR 도우미</b>에 물어보세요.",
+  blocks:[{h:"연차 부여 기준"},
+   {p:"입사 1년 미만은 매월 개근 시 1일씩, 1년 이상은 연 15일이 부여되며 3년마다 1일씩 가산됩니다."},
+   {h:"이월과 소멸"},
+   {p:"미사용 연차는 <span class='mk'>최대 5일까지 다음 연도 6월 30일</span>까지 이월됩니다. 이후 잔여분은 자동 소멸되며 수당으로 지급되지 않습니다."},
+   {p:"이월 신청은 매년 12월 15일부터 31일 사이에 그룹웨어 근태 메뉴에서 본인이 직접 합니다."},
+   {h:"반차 · 반반차"},
+   {p:"반차는 4시간, 반반차는 2시간 단위로 사용합니다. <span class='mk'>반반차는 하루 1회, 월 4회</span>까지 쓸 수 있습니다."},
+   {p:"반차 사용일에 연장근로가 발생하면 실근로시간이 8시간을 넘는 부분에 대해서만 연장수당을 지급합니다."},
+   {h:"경조 휴가"},
+   {p:"본인 결혼 5일, 자녀 출생 10일, 부모 사망 5일, 조부모 사망 3일입니다."}]},
+ pay:{em:"₩",title:"급여 · 정산 가이드",crumb:["HR 가이드","급여 · 정산"],
+  call:"급여명세서와 연말정산 일정은 이 페이지에서 관리합니다.",
+  blocks:[{h:"급여 지급일"},
+   {p:"급여는 매월 <span class='mk'>25일</span>에 지급하며, 지급일이 휴일이면 직전 영업일에 지급합니다."},
+   {p:"급여명세서는 급여일 3일 전부터 그룹웨어에서 확인할 수 있습니다."},
+   {h:"연말정산"},
+   {p:"간소화 자료 제출은 매년 1월 둘째 주까지이며, 환급액은 2월 급여에 반영됩니다."},
+   {h:"식대"},
+   {p:"식대는 월 20만 원 한도로 비과세 처리되며, <span class='mk'>재택근무일에도 동일하게</span> 지급됩니다."}]},
+ benefit:{em:"◈",title:"복리후생 가이드",crumb:["HR 가이드","복리후생"],
+  call:"건강검진·경조 지원은 모두 이 페이지 기준입니다.",
+  blocks:[{h:"건강검진"},
+   {p:"검진 대상자는 해당 연도 <span class='mk'>12월 31일</span>까지 수검을 완료해야 하며, 미수검분은 다음 해로 이월되지 않습니다."},
+   {p:"예약은 그룹웨어 복리후생 메뉴에서 진행하고, 지정 병원은 매년 3곳으로 갱신됩니다."},
+   {p:"<span class='mk'>계약직·파견 인력도 동일하게 대상</span>이며, 배우자 검진은 격년으로 30만 원까지 지원합니다."},
+   {h:"경조 지원"},
+   {p:"경조사비는 사유 발생일로부터 <span class='mk'>90일 이내</span>에 신청해야 하며, 기한이 지나면 소급 지급되지 않습니다."},
+   {p:"본인 결혼 100만 원, 자녀 출생 50만 원, 부모 사망 100만 원이며 신청 시 증빙 서류를 첨부합니다."}]},
+ cert:{em:"▤",title:"증명서 발급 안내",crumb:["HR 가이드","증명서 발급"],
+  call:"대부분의 증명서는 그룹웨어에서 즉시 발급됩니다.",
+  blocks:[{h:"재직 · 경력증명서"},
+   {p:"그룹웨어 증명서 발급 메뉴에서 즉시 발급되며, <span class='mk'>영문 발급도 같은 화면</span>에서 가능합니다."},
+   {p:"직인 날인본은 신청 후 <span class='mk'>1영업일</span> 이내 우편 또는 방문 수령으로 제공합니다."},
+   {h:"원천징수영수증"},
+   {p:"전년도분은 3월 이후 발급 가능하며, 재직 중 언제든 열람할 수 있습니다."}]},
+ work:{em:"◇",title:"근무 형태 가이드",crumb:["HR 가이드","근무 형태"],
+  call:"재택·유연근무 규정을 모아 둔 페이지입니다.",
+  blocks:[{h:"재택근무"},
+   {p:"재택근무는 <span class='mk'>최소 3일 전</span>까지 팀장 승인을 받아 신청하며, 당일 신청은 승인되지 않습니다."},
+   {p:"사용 한도는 <span class='mk'>월 8일</span>이며, 팀 사정에 따라 팀장이 조정할 수 있습니다."},
+   {h:"유연근무"},
+   {p:"코어타임은 10시부터 16시까지이며, 출근 시각은 7시에서 10시 사이에서 고를 수 있습니다."}]}
 };
+const PN={attend:"근태 · 연차",pay:"급여 · 정산",benefit:"복리후생",cert:"증명서 발급",work:"근무 형태"};
 
-/* ============ 지식베이스 ============ */
+/* ========== 지식 (질문 → 짧은 답 + 안내 페이지 + 관련 키워드) ========== */
 const KB=[
- {k:["이월","연차 이월","소멸"],a:"미사용 연차는 <b>최대 5일까지 다음 연도 6월 30일</b>까지 이월됩니다. 그 이후 남은 일수는 자동 소멸되고, 소멸분은 수당으로 지급되지 않습니다.<br><br>이월 신청은 매년 12월 15~31일에 직접 하셔야 해요.",s:"HR 가이드 / 근태·연차 / 이월과 소멸",c:["이월 신청하러 가기","내 연차 며칠 남았어요?"]},
- {k:["며칠 남","몇일 남","잔여","남았"],a:"최예솔 님의 잔여 연차는 <b>7일</b>이고, 이 중 <b>5일</b>이 이월 가능합니다. 2일은 12월 31일에 소멸됩니다.",s:"인사시스템 실시간 조회",c:["이월 신청하러 가기","연차 사용 내역 보기"]},
- {k:["경조사","경조","축의","조의"],a:"사유 발생일로부터 <b>90일 이내</b>에 신청하셔야 합니다. 기한이 지나면 소급 지급되지 않아요.<br><br>결재 &gt; 경조사비 신청에서 청첩장 또는 가족관계증명서를 첨부해 주세요.",s:"HR 가이드 / 복리후생 / 경조 지원",c:["지급 금액표 보기","경조 휴가 일수는?"]},
- {k:["건강검진","검진"],a:"올해 대상자는 <b>12월 31일</b>까지 받으셔야 합니다. 예솔 님은 아직 미수검 상태예요.<br><ul><li>지정 병원 3곳</li><li>예약: 복리후생 &gt; 건강검진</li></ul>",s:"HR 가이드 / 복리후생 / 건강검진",c:["지정 병원 알려줘","배우자도 되나요?"]},
- {k:["재직증명","증명서","경력증명"],a:"증명서 발급 &gt; 재직증명서에서 즉시 발급됩니다. 영문 발급도 같은 화면에서 가능하고, 직인 날인본은 신청 후 <b>1영업일</b> 걸립니다.",s:"HR 가이드 / 증명서 발급",c:["영문으로도 되나요?","원천징수영수증은요?"]},
- {k:["재택","유연근무","리모트"],a:"재택근무는 <b>최소 3일 전</b>까지 팀장 승인을 받아 신청합니다. 월 8일까지 사용할 수 있어요.<br><br>당일 신청은 승인되지 않으니 미리 올려 주세요.",s:"HR 가이드 / 근무 형태 / 재택근무",c:["재택 시 식대 나오나요?","유연근무 코어타임은?"]},
- {k:["급여일","월급","급여 언제"],a:"급여는 매월 <b>25일</b> 지급되며, 25일이 휴일이면 직전 영업일에 지급됩니다. 명세서는 급여일 3일 전부터 확인할 수 있어요.",s:"HR 가이드 / 급여·정산",c:["연말정산 일정은?","식대는 어디 포함인가요?"]},
- {k:["반차","반반차"],a:"반차는 4시간, 반반차는 2시간 단위로 사용합니다. 반반차는 하루 1회, <b>월 4회</b>까지 쓸 수 있어요.",s:"HR 가이드 / 근태·연차 / 반차 규정",c:["반차 쓴 날 야근하면?","연차 이월 기준은?"]},
- {k:["담당자","연결","상담"],a:"인사부문 담당자에게 문의를 남겨 드릴게요. 평균 <b>12분</b> 안에 답변드립니다.<br><br>남기실 내용을 이어서 입력해 주세요.",s:"인사부문 문의함",c:["괜찮아요, 더 물어볼게요"]},
- {k:["침대","매트리스","시몬스","흔들리지"],a:"흔들리지 않는 편안함은 저희 매트리스 담당이고, 저는 <b>흔들리지 않는 연차 규정</b> 담당입니다.<br><br>근태·급여·복리후생 중에 물어봐 주세요.",s:"HR 챗봇 자체 판단",c:["연차 이월 기준은?","건강검진 언제까지?"]}
+ {k:["이월","연차이월","소멸","넘길"],
+  a:"미사용 연차는 <b>최대 5일까지 다음 해 6월 30일</b>까지 이월됩니다.",
+  p:"attend",n:3,sub:"이월과 소멸",kw:["이월 신청 방법","잔여 연차","반차 규정"]},
+ {k:["잔여","남았","며칠남","몇일남","내연차"],
+  a:"예솔 님의 잔여 연차는 <b>7일</b>입니다. 이 중 5일은 이월 가능해요.",
+  p:"attend",n:3,sub:"이월과 소멸",sys:true,kw:["연차 이월","이월 신청 방법","반차 규정"]},
+ {k:["이월신청","신청방법","어떻게신청"],
+  a:"이월 신청은 <b>12월 15~31일</b>에 그룹웨어 근태 메뉴에서 직접 하시면 됩니다.",
+  p:"attend",n:4,sub:"이월 신청",kw:["연차 이월","반차 규정","경조 휴가"]},
+ {k:["반차","반반차","조퇴"],
+  a:"반차는 4시간, 반반차는 2시간 단위입니다. 반반차는 <b>월 4회</b>까지예요.",
+  p:"attend",n:6,sub:"반차 · 반반차",kw:["반차 쓴 날 야근","연차 이월","유연근무"]},
+ {k:["야근","연장","초과근무","수당"],
+  a:"반차 쓴 날은 <b>실근로 8시간 초과분</b>에 대해서만 연장수당이 나옵니다.",
+  p:"attend",n:7,sub:"반차 · 반반차",kw:["반차 규정","급여일","식대"]},
+ {k:["경조휴가","휴가일수","결혼휴가"],
+  a:"본인 결혼 5일, 자녀 출생 10일, 부모 사망 5일, 조부모 사망 3일입니다.",
+  p:"attend",n:9,sub:"경조 휴가",kw:["경조사비 신청","연차 이월"]},
+ {k:["건강검진","검진","병원"],
+  a:"올해 대상자는 <b>12월 31일</b>까지 받으셔야 합니다.",
+  p:"benefit",n:1,sub:"건강검진",kw:["검진 예약 방법","계약직도 대상","배우자 검진"]},
+ {k:["예약","검진예약"],
+  a:"그룹웨어 복리후생 &gt; 건강검진에서 예약하시면 됩니다. 지정 병원은 3곳이에요.",
+  p:"benefit",n:2,sub:"건강검진",kw:["건강검진 기한","계약직도 대상"]},
+ {k:["계약직","파견","배우자"],
+  a:"계약직·파견도 검진 대상입니다. 배우자 검진은 격년으로 30만 원까지 지원돼요.",
+  p:"benefit",n:3,sub:"건강검진",kw:["건강검진 기한","검진 예약 방법"]},
+ {k:["경조","축의","조의","결혼","장례","부고"],
+  a:"경조사비는 사유 발생일로부터 <b>90일 이내</b>에 신청하셔야 합니다.",
+  p:"benefit",n:5,sub:"경조 지원",kw:["경조 지급 금액","경조 휴가","건강검진"]},
+ {k:["금액","얼마","지급액"],
+  a:"본인 결혼 100만 원, 자녀 출생 50만 원, 부모 사망 100만 원입니다.",
+  p:"benefit",n:6,sub:"경조 지원",kw:["경조사비 신청","경조 휴가"]},
+ {k:["재직증명","증명서","경력증명","서류"],
+  a:"그룹웨어 증명서 발급에서 즉시 발급됩니다. 영문도 같은 화면에서 가능해요.",
+  p:"cert",n:1,sub:"재직 · 경력증명서",kw:["직인 날인본","원천징수영수증","급여명세서"]},
+ {k:["직인","날인"],
+  a:"직인 날인본은 신청 후 <b>1영업일</b> 이내에 받으실 수 있습니다.",
+  p:"cert",n:2,sub:"재직 · 경력증명서",kw:["재직증명서 발급","원천징수영수증"]},
+ {k:["원천징수"],
+  a:"전년도분은 3월 이후 발급 가능하고, 재직 중 언제든 열람할 수 있습니다.",
+  p:"cert",n:4,sub:"원천징수영수증",kw:["연말정산 일정","재직증명서 발급"]},
+ {k:["재택","원격","리모트"],
+  a:"재택근무는 <b>최소 3일 전</b>까지 팀장 승인을 받아 신청합니다.",
+  p:"work",n:1,sub:"재택근무",kw:["재택 사용 한도","재택 시 식대","유연근무"]},
+ {k:["한도","월8일","며칠까지쓸"],
+  a:"재택 사용 한도는 <b>월 8일</b>입니다. 팀 사정에 따라 조정될 수 있어요.",
+  p:"work",n:2,sub:"재택근무",kw:["재택근무 신청","유연근무"]},
+ {k:["유연근무","코어타임","출근시간"],
+  a:"코어타임은 <b>10시~16시</b>이고, 출근은 7시~10시 사이에서 고르실 수 있어요.",
+  p:"work",n:4,sub:"유연근무",kw:["재택근무 신청","반차 규정"]},
+ {k:["급여일","월급","월급날","급여언제"],
+  a:"급여는 매월 <b>25일</b>에 지급되고, 휴일이면 직전 영업일로 당겨집니다.",
+  p:"pay",n:1,sub:"급여 지급일",kw:["급여명세서","연말정산 일정","식대"]},
+ {k:["명세서"],
+  a:"급여명세서는 급여일 <b>3일 전</b>부터 그룹웨어에서 보실 수 있습니다.",
+  p:"pay",n:2,sub:"급여 지급일",kw:["급여일","연말정산 일정"]},
+ {k:["연말정산","간소화","환급"],
+  a:"간소화 자료는 <b>1월 둘째 주</b>까지 제출하시고, 환급은 2월 급여에 반영됩니다.",
+  p:"pay",n:4,sub:"연말정산",kw:["원천징수영수증","급여일"]},
+ {k:["식대","밥값","점심"],
+  a:"식대는 월 20만 원 한도 비과세이고, <b>재택근무일에도 동일하게</b> 나옵니다.",
+  p:"pay",n:6,sub:"식대",kw:["급여일","재택근무 신청"]},
+ {k:["침대","매트리스","시몬스","흔들리지"],
+  a:"흔들리지 않는 편안함은 매트리스 담당이고, 저는 <b>흔들리지 않는 연차 규정</b> 담당입니다.",
+  p:"attend",n:1,sub:"연차 부여 기준",kw:["연차 이월","건강검진 기한","급여일"]}
 ];
-
-function findKB(q){
-  const t=q.replace(/\s/g,"");
-  for(const e of KB) for(const k of e.k) if(t.includes(k.replace(/\s/g,""))) return e;
-  return null;
-}
-
-/* ============ 상태 ============ */
-const state={
-  miss:[{q:"육아휴직 복직 후 연차 산정은 어떻게 되나요",n:18},
-        {q:"퇴직연금 DC형 운용사 변경 방법",n:11},
-        {q:"배우자 출산휴가 분할 사용 가능한가요",n:9},
-        {q:"사내 추천 채용 보상금 지급 시점",n:6}],
-  aRows:[{q:"육아휴직 중에 성과급도 나오나요?",c:"급여·보상",n:14,s:"new"},
-         {q:"계약직도 건강검진 대상인가요?",c:"복리후생",n:9,s:"new"},
-         {q:"반차 쓴 날 야근하면 수당 어떻게 되나요",c:"근태",n:7,s:"wait"},
-         {q:"퇴사 시 남은 연차 정산 기준",c:"근태",n:6,s:"ok"},
-         {q:"사내 동호회 지원금 신청 방법",c:"복리후생",n:5,s:"new"},
-         {q:"재택 시 식대 지급되나요?",c:"급여·보상",n:4,s:"new"}],
-  aHist:[{t:"연차 이월 기준이 어떻게 되나요",q:"연차 이월 기준이 어떻게 되나요?"},
-         {t:"재택근무 신청 절차",q:"재택근무 신청 절차 알려주세요"},
-         {t:"경조사비 지급 대상",q:"경조사비 언제까지 신청해요?"},
-         {t:"재직증명서 발급",q:"재직증명서 어떻게 발급받나요?"}]
-};
-
-/* ============ 채팅 엔진 ============ */
-const chats={};
-document.querySelectorAll("[data-chat]").forEach(el=>chats[el.dataset.chat]=el);
-
-function bubble(box,who,html,src,chips){
-  const m=document.createElement("div");
-  m.className="msg "+who;
-  m.innerHTML=`<span class="av">${who==="usr"?"나":"HR"}</span><div class="bx">${html}${src?`<div class="src">📄 출처 · <b>${src}</b></div>`:""}</div>`;
-  box.appendChild(m);
-  if(chips&&chips.length){
-    const r=document.createElement("div");r.className="chiprow";
-    chips.forEach(c=>{const b=document.createElement("button");b.className="chip";b.textContent=c;
-      b.onclick=()=>{r.remove();ask(box.dataset.chat,c)};r.appendChild(b)});
-    box.appendChild(r);
+function find(q){
+  const t=q.replace(/\s/g,"").toLowerCase();
+  let best=null,len=0;
+  for(const e of KB) for(const k of e.k){
+    const kk=k.replace(/\s/g,"");
+    if(t.includes(kk)&&kk.length>len){best=e;len=kk.length}
   }
-  box.scrollTop=box.scrollHeight;
-  return m;
+  return best;
 }
-function typing(box){
+const EGG=/정지훈/;
+
+/* ========== 노션 렌더 ========== */
+function renderPage(id,anchor){
+  const p=PAGES[id];
+  document.getElementById("nCrumb").innerHTML=p.crumb.map(c=>"<span>"+c+"</span>").join("<span>/</span>");
+  let h='<span class="nicon">'+p.em+'</span><h1 class="nh1">'+p.title+'</h1><div class="ncall"><span>💡</span><div>'+p.call+'</div></div>';
+  p.blocks.forEach((b,i)=>{h+=b.h?'<h2 class="nh2" id="b'+i+'">'+b.h+'</h2>':'<p class="np" id="b'+i+'">'+b.p+'</p>'});
+  document.getElementById("nBody").innerHTML=h;
+  document.querySelectorAll(".nitem[data-page]").forEach(n=>n.classList.toggle("on",n.dataset.page===id));
+  if(typeof anchor==="number"){
+    const el=document.getElementById("b"+anchor);
+    if(el){document.querySelectorAll(".np.hl").forEach(x=>x.classList.remove("hl"));
+      el.classList.add("hl");if(el.scrollIntoView)el.scrollIntoView({block:"center",behavior:"smooth"})}
+  }
+}
+
+/* ========== 대화 ========== */
+const chat=document.getElementById("chat");
+function esc(s){return s.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))}
+function bubble(who,html,o){
+  o=o||{};
+  const m=document.createElement("div");m.className="msg "+who;
+  m.innerHTML='<div class="bx">'+html+'</div>';
+  const bx=m.querySelector(".bx");
+  if(o.page){
+    const g=document.createElement("div");g.className="guide";
+    g.textContent=o.guide||"관련된 페이지를 안내드릴게요.";
+    bx.appendChild(g);
+    const c=document.createElement("button");c.className="pcard";
+    c.innerHTML='<span class="pe">'+PAGES[o.page].em+'</span><span class="pt"><b>HR 가이드 / '+PN[o.page]+'</b><small>'+esc(o.sub||"")+' 문단</small></span><span class="ar">→</span>';
+    c.onclick=()=>{renderPage(o.page,o.n);toast("노션 문서의 해당 문단으로 이동했습니다")};
+    bx.appendChild(c);
+  }
+  if(o.egg){
+    const g=document.createElement("div");g.className="guide";g.textContent=o.egg;
+    bx.appendChild(g);
+    const c=document.createElement("button");c.className="pcard lock";
+    c.innerHTML='<span class="pe">🔒</span><span class="pt"><b>인사부문 내부 / 정지훈</b><small>열람 권한 없음</small></span><span class="ar">→</span>';
+    c.onclick=()=>toast("이 문서는 인사부문 내부 전용입니다");
+    bx.appendChild(c);
+  }
+  if(o.kw&&o.kw.length){
+    const w=document.createElement("div");w.className="kwrap";
+    const l=document.createElement("div");l.className="kl";
+    l.textContent=o.kwLine||"더 궁금한 게 있으면 말씀 주세요.";
+    w.appendChild(l);
+    const r=document.createElement("div");r.className="kws";
+    o.kw.forEach(k=>{const b=document.createElement("button");b.className="kw";
+      b.innerHTML='<i>#</i>'+esc(k);b.onclick=()=>send(k);r.appendChild(b)});
+    w.appendChild(r);bx.appendChild(w);
+  }
+  chat.appendChild(m);chat.scrollTop=chat.scrollHeight;return m;
+}
+function typing(){
   const m=document.createElement("div");m.className="msg bot";
-  m.innerHTML='<span class="av">HR</span><div class="bx" style="padding:0"><div class="typing"><i></i><i></i><i></i></div></div>';
-  box.appendChild(m);box.scrollTop=box.scrollHeight;return m;
+  m.innerHTML='<div class="bx" style="padding:0"><div class="typing"><i></i><i></i><i></i></div></div>';
+  chat.appendChild(m);chat.scrollTop=chat.scrollHeight;return m;
 }
-function ask(id,q){
-  const box=chats[id]; if(!box||!q.trim())return;
-  bubble(box,"usr",esc(q));
-  const t=typing(box);
+function send(q){
+  if(!q||!q.trim())return;
+  bubble("usr",esc(q));
+  const t=typing();
   setTimeout(()=>{
     t.remove();
-    const hit=findKB(q);
-    if(hit){ bubble(box,"bot",hit.a,hit.s,hit.c); }
-    else{
-      bubble(box,"bot",`아직 그 내용은 등록되어 있지 않아요. 지어내지 않고 <b>인사부문에 그대로 전달</b>하겠습니다.<br><br>비슷한 질문이 쌓이면 담당자가 우선으로 문서를 보강합니다.`,null,["담당자에게 연결해 주세요","연차 이월 기준은?"]);
+    if(EGG.test(q.replace(/\s/g,""))){
+      bubble("bot","정지훈님에 대해 알려드릴게요.<br><br>"+
+        "<b>인사시스템 기준</b><br>미혼 (만 38~39세 추정)"+
+        "<div class=\"eggnote\">사내 비공식 관측 기록</div>"+
+        "<ul class=\"egglist\">"+
+        "<li>화요일 분리수거로 진짜 집에 일찍 감</li>"+
+        "<li>사내 연애 중</li>"+
+        "<li>8월 말 웨딩촬영 함</li>"+
+        "<li>최근 프로포즈 진행</li>"+
+        "</ul>",
+        {egg:"인사시스템은 아직 미혼으로 알고 있습니다. 곧 갱신될 예정입니다."});
+      return;
+    }
+    const e=find(q);
+    if(e){
+      bubble("bot",e.a,{page:e.p,n:e.n,sub:e.sub,kw:e.kw,
+        guide:e.sys?"개인 정보는 인사시스템에서 가져왔고, 규정은 이 페이지에 있어요.":"관련된 페이지를 안내드릴게요."});
+    }else{
+      bubble("bot","그 내용은 아직 노션 문서에 없어서 안내드릴 페이지가 없습니다. 지어내지 않고 <b>인사부문에 그대로 전달</b>했어요.");
       addMiss(q);
     }
-  },700+Math.random()*450);
+  },620+Math.random()*380);
 }
-function esc(s){return s.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))}
+document.getElementById("form").onsubmit=e=>{
+  e.preventDefault();const i=document.getElementById("inp");const v=i.value;i.value="";send(v);
+};
 
-/* 미답변 누적 */
+/* ========== 위젯 ========== */
+const widget=document.getElementById("widget"),launcher=document.getElementById("launcher");
+document.getElementById("wClose").onclick=()=>{widget.classList.add("hide");launcher.classList.add("show")};
+launcher.onclick=()=>{widget.classList.remove("hide");launcher.classList.remove("show")};
+document.querySelectorAll(".nitem[data-page]").forEach(n=>n.onclick=()=>renderPage(n.dataset.page));
+document.getElementById("navRoot").onclick=()=>renderPage("attend");
+
+/* ========== 관리자 ========== */
+const state={
+ rows:[{q:"육아휴직 복직하면 연차는 어떻게 돼?",n:14,s:"new",p:"HR 가이드 / 근태 · 연차",
+        d:"육아휴직 기간은 출근한 것으로 보아 근속기간에 포함합니다. 다만 복직 시점에 따라 부여 일수가 달라져 인사부문 확인이 필요합니다."},
+       {q:"퇴직연금 운용사 바꾸려면?",n:11,s:"new",p:"HR 가이드 / 급여 · 정산",
+        d:"퇴직연금 DC형 운용사 변경은 연 2회, 3월과 9월에 신청할 수 있습니다. 신청서는 그룹웨어 서식함에 있습니다."},
+       {q:"동호회 지원금은 얼마야?",n:6,s:"new",p:"HR 가이드 / 복리후생",
+        d:"동호회 지원금은 분기별로 인원수에 따라 지급하며, 활동 사진과 영수증을 첨부해 신청합니다."},
+       {q:"출장 숙박비 한도는?",n:5,s:"new",p:"HR 가이드 / 근무 형태",
+        d:"국내 출장 숙박비는 1박 12만 원, 해외는 지역 등급별 기준표를 적용합니다."},
+       {q:"반차 쓴 날 야근하면 수당은?",n:9,s:"ok",p:"HR 가이드 / 근태 · 연차",
+        d:"반차 사용일에 연장근로가 발생하면 실근로시간이 8시간을 넘는 부분에 대해 연장수당을 지급합니다."}],
+ kw:[{n:"연차",tags:["연차","이월","소멸","남은 휴가","월차"],src:"근태 · 연차"},
+     {n:"반차",tags:["반차","반반차","조퇴"],src:"근태 · 연차"},
+     {n:"건강검진",tags:["건강검진","검진","종합검진","병원"],src:"복리후생"},
+     {n:"경조",tags:["경조사비","축의금","조의금","부고"],src:"복리후생"},
+     {n:"증명서",tags:["재직증명","경력증명","원천징수","영문"],src:"증명서 발급"},
+     {n:"재택",tags:["재택","원격근무","유연근무","코어타임"],src:"근무 형태"},
+     {n:"급여",tags:["급여일","월급날","식대","연말정산"],src:"급여 · 정산"}]
+};
+const PS={new:["안내 못함","p-new","노션에 추가"],wait:["반영 대기","p-wait","확인하기"],ok:["안내 중","p-ok","문단 보기"]};
 function addMiss(q){
-  const e=state.miss.find(m=>m.q===q);
-  if(e)e.n++; else state.miss.unshift({q,n:1,fresh:true});
-  const r=state.aRows.find(m=>m.q===q);
-  if(r)r.n++; else state.aRows.unshift({q,c:"미분류",n:1,s:"new",fresh:true});
-  renderMiss();renderATable();
-  toast("답을 못 찾았어요 → 관리자 화면 미답변 목록에 추가됨");
+  const r=state.rows.find(m=>m.q===q);
+  if(r)r.n++;else state.rows.unshift({q:q,n:1,s:"new",p:"HR 가이드 / 근태 · 연차",d:""});
+  renderTable();toast("안내할 페이지가 없는 질문입니다 → 관리자 화면에 쌓임");
 }
-function renderMiss(){
-  const L=document.getElementById("missList");
-  L.innerHTML="";
-  state.miss.forEach((m,i)=>{
-    const d=document.createElement("div");d.className="missrow";
-    d.innerHTML=`<b>${esc(m.q)}</b><span class="cnt ${m.fresh?"new":""}">${m.n}회</span>`;
-    const b=document.createElement("button");b.className="act";b.textContent="반영 완료";
-    b.onclick=()=>{d.classList.add("go");setTimeout(()=>{state.miss.splice(state.miss.indexOf(m),1);renderMiss();toast("노션에 반영했습니다. 챗봇이 이제 답할 수 있어요")},330)};
-    d.appendChild(b);L.appendChild(d);
-  });
-  document.getElementById("missCount").textContent="· "+state.miss.length+"건";
-}
-function renderATable(){
+function renderTable(){
   const T=document.getElementById("aTable");T.innerHTML="";
-  const PS={new:["미답변","p-new","답변 작성"],wait:["검수 대기","p-wait","검수하기"],ok:["답변 완료","p-ok","보기"]};
-  state.aRows.forEach(r=>{
-    const tr=document.createElement("tr");
+  state.rows.forEach(r=>{
+    const tr=document.createElement("tr");tr.dataset.q=r.q;
     const p=PS[r.s];
-    tr.innerHTML=`<td>${esc(r.q)}</td><td>${r.c}</td><td>${r.n}</td><td><span class="pill ${p[1]}">${p[0]}</span></td>`;
-    const td=document.createElement("td");
-    const b=document.createElement("button");b.className="lnk";b.textContent=p[2];
-    b.onclick=()=>{
-      if(r.s==="ok"){toast("저장된 답변을 엽니다");return}
-      tr.classList.add("gone");
-      setTimeout(()=>{r.s=r.s==="new"?"wait":"ok";renderATable();
-        toast(r.s==="wait"?"답변을 작성했습니다. 검수 대기로 이동":"검수 완료 · 지식 문서로 저장됨")},340);
-    };
+    tr.innerHTML='<td>'+esc(r.q)+'</td><td>'+r.n+'회</td><td><span class="pill '+p[1]+'">'+p[0]+'</span></td>';
+    const td=document.createElement("td");const b=document.createElement("button");
+    b.className="lnk";b.textContent=p[2];b.onclick=()=>openDrawer(r);
     td.appendChild(b);tr.appendChild(td);T.appendChild(tr);
   });
-  document.getElementById("aMiss").textContent=state.aRows.filter(r=>r.s==="new").length;
+  document.getElementById("aMiss").textContent=state.rows.filter(r=>r.s==="new").length;
 }
-function renderHist(){
-  const H=document.getElementById("aHist");H.innerHTML="";
-  state.aHist.forEach((h,i)=>{
-    const b=document.createElement("button");b.className="item";b.textContent=h.t;
-    b.setAttribute("aria-pressed",i===0);
-    b.onclick=()=>{
-      [...H.children].forEach(c=>c.setAttribute("aria-pressed","false"));
-      b.setAttribute("aria-pressed","true");
-      document.getElementById("aTitle").textContent=h.t;
-      chats.a.innerHTML="";ask("a",h.q);
-    };
-    H.appendChild(b);
+function renderKw(){
+  const L=document.getElementById("kwList");L.innerHTML="";
+  state.kw.forEach(k=>{
+    const d=document.createElement("div");d.className="krow";
+    d.innerHTML='<span class="kn">'+k.n+'</span>';
+    const kk=document.createElement("div");kk.className="kk";
+    k.tags.forEach(t=>{const i=document.createElement("i");i.textContent=t;kk.appendChild(i)});
+    const add=document.createElement("button");add.className="add";add.textContent="+ 표현 추가";
+    add.onclick=()=>{const v=prompt("구성원이 이렇게도 부릅니다 — 표현을 입력하세요","");
+      if(!v)return;k.tags.push(v);renderKw();toast("'"+v+"' 표현을 추가했습니다")};
+    kk.appendChild(add);d.appendChild(kk);
+    const s=document.createElement("span");s.className="src";s.textContent="→ "+k.src;
+    d.appendChild(s);L.appendChild(d);
   });
 }
-
-/* ============ 초기 대화 ============ */
-function seed(){
-  chats.c.innerHTML="";chats.b.innerHTML="";chats.a.innerHTML="";
-  bubble(chats.c,"bot","안녕하세요 예솔 님. 근태·급여·복리후생 무엇이든 물어보세요.",null,["내 연차 며칠 남았어요?","재직증명서 어떻게 발급받나요?","경조사비 언제까지 신청해요?"]);
-  bubble(chats.b,"bot","안녕하세요 예솔 님. 왼쪽 카드를 누르거나 바로 물어보셔도 됩니다.",null,["건강검진 언제까지 받아야 하나요?","급여일이 언제인가요?"]);
-  document.getElementById("aTitle").textContent="연차 이월 기준이 어떻게 되나요";
-  ask("a","연차 이월 기준이 어떻게 되나요?");
+const AH={miss:["안내 못한 질문","노션에 해당 내용이 없어 페이지를 안내하지 못한 질문입니다. <b>문단을 추가</b>하면 다음부터 그 페이지로 안내합니다."],
+ kw:["키워드 · 페이지 연결","구성원이 쓰는 표현을 노션 페이지에 걸어 둡니다. 여기 등록된 표현이 답변 아래 #관련 키워드로도 나옵니다."],
+ sync:["노션 연동","연결된 노션 페이지와 동기화 상태입니다. 문서를 고치면 안내 내용도 함께 바뀝니다."]};
+document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".nav").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  const t=b.dataset.t;
+  document.querySelectorAll("[data-p]").forEach(p=>p.hidden=p.dataset.p!==t);
+  document.getElementById("aTitle").textContent=AH[t][0];
+  document.getElementById("aLead").innerHTML=AH[t][1];
+});
+document.addEventListener("click",e=>{
+  const sy=e.target.closest("[data-sync]");
+  if(sy){sy.textContent="반영 중…";setTimeout(()=>{sy.outerHTML='<span class="badge bd-ok">동기화됨</span>';toast("온보딩 페이지를 반영했습니다")},900)}
+});
+const drawer=document.getElementById("drawer");let curRow=null;
+function openDrawer(r){
+  curRow=r;
+  document.getElementById("drQ").textContent="구성원 질문 · "+r.q;
+  const sel=document.getElementById("drPage");sel.selectedIndex=0;
+  [...sel.options].forEach((o,i)=>{if(o.text===r.p)sel.selectedIndex=i});
+  document.getElementById("drBody").value=r.d||"";
+  drawer.classList.remove("hide");
 }
+function closeDrawer(){drawer.classList.add("hide");curRow=null}
+document.getElementById("drX").onclick=closeDrawer;
+document.getElementById("drCancel").onclick=closeDrawer;
+document.getElementById("drSave").onclick=()=>{
+  if(!curRow)return;
+  const body=document.getElementById("drBody").value.trim();
+  if(!body){toast("추가할 문단을 입력해 주세요");return}
+  const page=document.getElementById("drPage").value,row=curRow,q=row.q,wasNew=row.s==="new";
+  row.d=body;row.p=page;row.s=wasNew?"wait":"ok";
+  closeDrawer();
+  const tr=[...document.querySelectorAll("#aTable tr")].find(t=>t.dataset.q===q);
+  if(tr)tr.classList.add("gone");
+  setTimeout(()=>{renderTable();toast(wasNew?page+"에 문단을 추가했습니다 · 다음 동기화 때 반영됩니다":page+"의 문단을 수정했습니다")},340);
+};
 
-/* ============ 토스트 ============ */
+/* ========== 토스트 · 뷰 ========== */
 let tT;
-function toast(msg){
-  const t=document.getElementById("toast");t.innerHTML=msg;t.classList.add("on");
-  clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("on"),2600);
-}
-
-/* ============ 탭 / 뷰 ============ */
-let cur="C",view="user";
-const tabs=[...document.querySelectorAll(".tab")],segs=[...document.querySelectorAll(".seg button")];
+function toast(m){const t=document.getElementById("toast");t.innerHTML=m;t.classList.add("on");
+  clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("on"),2600)}
+let view="user";
+const segs=[...document.querySelectorAll("#segbar button")];
 function render(){
-  document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===cur+"-"+view));
-  tabs.forEach(t=>t.setAttribute("aria-selected",t.dataset.s===cur));
+  document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===view));
   segs.forEach(s=>s.setAttribute("aria-pressed",s.dataset.v===view));
-  const d=DESC[cur];
-  document.getElementById("desc").innerHTML=
-   `<h3>${d.t}</h3><p>${d.p}</p>
-    <div class="split">
-      <div><h4>이런 점이 좋습니다</h4><ul>${d.good.map(x=>`<li>${x}</li>`).join("")}</ul></div>
-      <div><h4>이런 점은 감안해야 합니다</h4><ul>${d.bad.map(x=>`<li class="warn">${x}</li>`).join("")}</ul></div>
-    </div>
-    <div class="tagrow">${d.g.map(x=>`<span>${x}</span>`).join("")}</div>`;
-  if(cur==="C"&&view==="admin")setTimeout(()=>document.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"),80);
 }
-tabs.forEach(t=>t.onclick=()=>{cur=t.dataset.s;render()});
 segs.forEach(s=>s.onclick=()=>{view=s.dataset.v;render()});
 
-/* ============ 개별 인터랙션 ============ */
-// 폼
-document.querySelectorAll(".cform").forEach(f=>{
-  f.onsubmit=e=>{e.preventDefault();const i=f.querySelector("input");ask(f.dataset.form,i.value);i.value=""};
-});
-document.getElementById("bAsk").onsubmit=e=>{e.preventDefault();
-  const i=e.target.querySelector("input");if(!i.value.trim())return;ask("b",i.value);i.value=""};
-// data-ask 전역
-document.addEventListener("click",e=>{
-  const el=e.target.closest("[data-ask]");if(!el)return;
-  const id=el.closest(".C")?"c":el.closest(".B")?"b":"a";
-  ask(id,el.dataset.ask);
-});
-// 노션 토글
-document.querySelectorAll(".tog .th").forEach(t=>t.onclick=()=>t.parentElement.classList.toggle("open"));
-// 위젯 열고 닫기
-document.getElementById("cClose").onclick=()=>{document.getElementById("cWidget").classList.add("hide");document.getElementById("cOpen").classList.add("show")};
-document.getElementById("cOpen").onclick=()=>{document.getElementById("cWidget").classList.remove("hide");document.getElementById("cOpen").classList.remove("show")};
-// 1안 관리자 탭
-document.querySelectorAll("#cTabs button").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll("#cTabs button").forEach(x=>x.setAttribute("aria-pressed",x===b));
-  document.querySelectorAll("[data-cpane]").forEach(p=>p.hidden=p.dataset.cpane!==b.dataset.t);
-});
-// 스위치
-document.addEventListener("click",e=>{
-  const s=e.target.closest(".sw");if(!s)return;
-  const on=s.getAttribute("aria-checked")==="true";
-  s.setAttribute("aria-checked",!on);
-  toast(s.closest(".swrow").querySelector("span").textContent+(on?" · 껐습니다":" · 켰습니다"));
-});
-// 동기화 / 복사
-document.addEventListener("click",e=>{
-  const b=e.target.closest("[data-sync]");
-  if(b){b.textContent="반영 중…";setTimeout(()=>{b.outerHTML='<span class="badge bd-ok">동기화됨</span>';toast("온보딩 페이지를 반영했습니다")},900);}
-  const c=e.target.closest("[data-copy]");
-  if(c){navigator.clipboard&&navigator.clipboard.writeText(c.dataset.copy);c.textContent="복사됨";setTimeout(()=>c.textContent="복사",1400);toast("설치 주소를 복사했습니다")}
-});
-// 2안 상단/좌측 내비
-document.querySelectorAll("#bNav button,#bNav2 button").forEach(b=>b.onclick=()=>{
-  const sib=b.parentElement.querySelectorAll("button");
-  sib.forEach(x=>x.setAttribute("aria-pressed",x===b));
-  toast(b.textContent+" 화면 — 시안에서는 이 메뉴만 구현했습니다");
-});
-// 2안 미리보기 실시간
-const bQ=document.getElementById("bQ"),bA=document.getElementById("bA"),bPrev=document.getElementById("bPrev");
-function prev(){bPrev.innerHTML=bA.value.replace(/\n/g,"<br>")+
-  '<div style="margin-top:10px;padding-top:9px;border-top:1px dashed #E4E4DE;font-size:11.5px;color:#8A938C">출처: 2026 복리후생 운영지침</div>'}
-bA.oninput=prev;prev();
-document.getElementById("bAddTag").onclick=()=>{
-  const v=prompt("같은 뜻으로 묻는 표현을 입력하세요","건강검진 기한 언제");
-  if(!v)return;const i=document.createElement("i");i.textContent=v;
-  document.getElementById("bTags").insertBefore(i,document.getElementById("bAddTag"));
-  toast("표현을 추가했습니다");
-};
-document.getElementById("bSave").onclick=()=>toast("저장했습니다 · 챗봇과 포털 FAQ에 동시 반영됨");
-document.getElementById("bTemp").onclick=()=>toast("임시 저장했습니다");
-// 3안 새 질문
-document.getElementById("aNew").onclick=()=>{
-  chats.a.innerHTML="";document.getElementById("aTitle").textContent="새 질문";
-  bubble(chats.a,"bot","안녕하세요 예솔 님. 무엇을 도와드릴까요?",null,["내 연차 며칠 남았어요?","급여일이 언제인가요?","건강검진 언제까지 받아야 하나요?"]);
-};
-
-/* ============ 시작 ============ */
-renderMiss();renderATable();renderHist();seed();render();
+/* ========== 시작 ========== */
+renderPage("attend");renderTable();renderKw();render();
+bubble("bot","안녕하세요 예솔 님.<br><b>궁금하신 거 있으세요?</b>");
 </script>
+</body>
+</html>
