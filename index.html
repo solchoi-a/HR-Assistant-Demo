@@ -1,651 +1,2063 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>시몬스 인사부문 HR 챗봇 · 1안-S 시안</title>
-<meta name="description" content="노션을 지식 소스로 쓰는 사내 HR 챗봇 위젯 프로토타입">
-<meta name="color-scheme" content="light">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simmons HR Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#12161C;--mute:#6B7484;--line:#E3E6EC;--bg:#F2F3F6;--blue:#2F6FED;
- --font:"Pretendard",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
-*{box-sizing:border-box}
-html,body{margin:0}
-body{font-family:var(--font);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-button,input,select,textarea{font-family:inherit}
-button{cursor:pointer;border:none;background:none;color:inherit}
-.shell{max-width:1180px;margin:0 auto;padding:22px 20px 40px}
+/* =========================================================================
+   Simmons HR Assistant — Design Tokens
+   Font: Pretendard (로컬 설치 시 우선 적용) → Apple SD Gothic Neo → Noto Sans KR
+   TODO: 사내 배포 시 Pretendard woff2 를 자체 호스팅하여 @font-face 로 교체
+   ========================================================================= */
+:root{
+  --navy:#0E1E3C; --navy-2:#1B2F55; --blue:#2563EB; --blue-d:#1D4ED8; --blue-l:#EFF4FF;
+  --mint:#10B4A0; --mint-l:#E6F7F4; --purple:#7C5CFC; --purple-l:#F1EDFF;
+  --amber:#D97706; --amber-l:#FEF4E6; --red:#DC2626; --red-l:#FDECEC; --green:#059669;
+  --bg:#FFFFFF; --bg-soft:#F5F7FA; --bg-sunk:#EEF1F6;
+  --card:#FFFFFF; --line:#E4E9F0; --line-strong:#CDD5E0;
+  --text:#101828; --text-2:#475467; --text-3:#8A94A6;
+  --r-sm:8px; --r:12px; --r-lg:18px; --r-xl:24px;
+  --sh-1:0 1px 2px rgba(16,24,40,.05);
+  --sh-2:0 4px 16px rgba(16,24,40,.08);
+  --sh-3:0 18px 48px rgba(14,30,60,.18);
+  --font:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',system-ui,sans-serif;
+  --maxw:1240px; --brand-deep:#0E1E3C; --sidebar:#0E1E3C;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1419; --bg-soft:#151B23; --bg-sunk:#1B222C; --card:#161D26;
+    --line:#252E3A; --line-strong:#33404F;
+    --text:#E7ECF3; --text-2:#A7B3C4; --text-3:#7C8899;
+    --blue-l:#16233D; --mint-l:#0F2A28; --purple-l:#201B3A; --amber-l:#2C2213; --red-l:#2E1919;
+    --navy:#E7ECF3; --navy-2:#C7D2E0;
+    --sh-2:0 4px 16px rgba(0,0,0,.4); --sh-3:0 18px 48px rgba(0,0,0,.55);
+    --brand-deep:#10202F; --sidebar:#0B1017;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1419; --bg-soft:#151B23; --bg-sunk:#1B222C; --card:#161D26;
+  --line:#252E3A; --line-strong:#33404F;
+  --text:#E7ECF3; --text-2:#A7B3C4; --text-3:#7C8899;
+  --blue-l:#16233D; --mint-l:#0F2A28; --purple-l:#201B3A; --amber-l:#2C2213; --red-l:#2E1919;
+  --navy:#E7ECF3; --navy-2:#C7D2E0; --brand-deep:#10202F; --sidebar:#0B1017;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--font); background:var(--bg); color:var(--text);
+  font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased;
+  word-break:keep-all; overflow-wrap:anywhere;
+}
+img{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:none;padding:0}
+a{color:var(--blue);text-decoration:none}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.hidden{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
-.viewbar{display:flex;align-items:center;gap:11px;margin-bottom:14px;flex-wrap:wrap}
-.seg{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px}
-.seg button{padding:8px 16px;border-radius:7px;font-size:12.5px;font-weight:700;color:#6B7484;transition:.14s}
-.seg button[aria-pressed="true"]{background:#12161C;color:#fff}
-.seg button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
-.viewbar .note{font-size:12px;color:var(--mute);line-height:1.7}
-.stage{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 14px 36px -20px rgba(18,22,28,.4)}
-.pane{display:none}.pane.on{display:block;animation:fade .28s}
-@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.mock{height:660px;display:flex;font-size:13px}
-@media(max-width:760px){.mock{height:600px}}
-.scroll{overflow:auto;scroll-behavior:smooth}
-.scroll::-webkit-scrollbar{width:8px}
-.scroll::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:99px}
+/* ---------- 공통 요소 ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:10px;
+  font-size:14px;font-weight:600;border:1px solid var(--line-strong);background:var(--card);color:var(--text);transition:.15s}
+.btn:hover{background:var(--bg-soft)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:var(--blue-d)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--text-2)}
+.btn.ghost:hover{background:var(--bg-sunk)}
+.btn.sm{padding:6px 11px;font-size:13px;border-radius:8px}
+.btn.mint{background:var(--mint);border-color:var(--mint);color:#fff}
+.btn.danger{color:var(--red);border-color:var(--line-strong)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:500;
+  background:var(--bg-soft);border:1px solid var(--line);color:var(--text-2);transition:.15s}
+button.chip:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:6px;font-size:12px;font-weight:600;line-height:1.7}
+.tag.blue{background:var(--blue-l);color:var(--blue)} .tag.mint{background:var(--mint-l);color:var(--mint)}
+.tag.purple{background:var(--purple-l);color:var(--purple)} .tag.gray{background:var(--bg-sunk);color:var(--text-2)}
+.tag.amber{background:var(--amber-l);color:var(--amber)} .tag.red{background:var(--red-l);color:var(--red)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-1)}
+.muted{color:var(--text-2)} .dim{color:var(--text-3)} .small{font-size:13px}
+.field{display:block;margin-bottom:14px}
+.field > span{display:block;font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:6px}
+.input,.select,.textarea{width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--card)}
+.textarea{min-height:92px;resize:vertical}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 
-/* 노션 */
-.N{--nt:#37352F;--ntm:#9B9A97;--ntl:#EDECE9}
-.N .mock{background:#fff;position:relative;overflow:hidden;color:var(--nt)}
-.N .nside{width:224px;background:#F7F7F5;border-right:1px solid var(--ntl);flex:none;padding:12px 0;overflow:auto}
-.N .nws{display:flex;align-items:center;gap:8px;padding:6px 14px 12px;font-weight:600;font-size:13.5px}
-.N .nws .sq{width:20px;height:20px;border-radius:5px;background:#37352F;color:#fff;font-size:10px;display:grid;place-items:center;font-weight:700}
-.N .nitem{padding:5px 14px;color:#5F5E5B;display:flex;gap:8px;align-items:center;transition:.12s;width:100%;text-align:left;font-size:13px}
-.N .nitem:hover{background:#EFEEEB}
-.N .nitem.on{background:#EBEAE7;font-weight:600;color:#37352F}
-.N .nitem .em{width:16px;text-align:center;flex:none}
-.N .nsec{padding:16px 14px 5px;font-size:11px;color:var(--ntm);font-weight:600}
-.N .nsub{padding-left:30px}
-.N .npage{flex:1;min-width:0;display:flex;flex-direction:column}
-.N .ntop{padding:10px 22px;font-size:12px;color:var(--ntm);display:flex;gap:8px;flex:none}
-.N .nbody{padding:6px 56px 60px;overflow:auto;flex:1}
-@media(max-width:900px){.N .nbody{padding:6px 22px 60px}}
-.N .nicon{font-size:40px;line-height:1;margin-bottom:10px;display:inline-block}
-.N .nh1{font-size:31px;font-weight:800;letter-spacing:-.025em;margin:0 0 16px}
-.N .ncall{background:#F7F6F3;border-radius:4px;padding:13px 15px;display:flex;gap:11px;font-size:13px;line-height:1.7;margin-bottom:20px;color:#4A4844}
-.N .nh2{font-size:17.5px;font-weight:700;margin:24px 0 6px}
-.N .np{font-size:13.5px;line-height:1.9;margin:0 0 6px;color:#4A4844;padding:3px 7px;border-radius:4px;transition:background .4s}
-.N .np.hl{background:#FEF6D8;box-shadow:0 0 0 1px #F3E2A0}
-.N .np .mk{background:#FBEEC5;padding:1px 2px;border-radius:2px}
+/* ---------- 포털(데모 배경) ---------- */
+.portal-top{position:sticky;top:0;z-index:30;background:var(--card);border-bottom:1px solid var(--line)}
+.portal-top .inner{max-width:var(--maxw);margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px}
+.brandmark{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em;color:var(--navy);font-size:16px}
+.brandmark .sq{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--brand-deep),var(--blue));
+  color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700}
+.portal-top .grow{flex:1}
+.who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2)}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--blue-l);color:var(--blue);display:grid;place-items:center;font-weight:700;font-size:12px}
+.portal{max-width:var(--maxw);margin:0 auto;padding:28px 20px 140px}
+.portal h1{font-size:clamp(24px,4vw,34px);letter-spacing:-.03em;margin:.2em 0 .1em;color:var(--navy)}
+.portal .lead{color:var(--text-2);max-width:62ch;margin:0 0 26px}
+.notice-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(258px,1fr))}
+.notice{padding:16px 18px;border-radius:var(--r);border:1px solid var(--line);background:var(--card)}
+.notice b{display:block;font-size:14.5px;margin-bottom:4px;color:var(--text)}
+.notice span{font-size:12.5px;color:var(--text-3)}
+.hint-strip{margin:26px 0 0;padding:16px 18px;border-radius:var(--r-lg);background:linear-gradient(120deg,var(--blue-l),var(--mint-l));
+  border:1px solid var(--line);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.hint-strip b{color:var(--navy)}
 
-/* 위젯 */
-.W{position:absolute;right:22px;bottom:22px;width:392px;max-width:calc(100% - 44px);height:calc(100% - 44px);max-height:560px;background:#fff;border-radius:18px;box-shadow:0 30px 70px -20px rgba(20,25,40,.45);border:1px solid #E3E6EE;overflow:hidden;display:flex;flex-direction:column;transition:.3s cubic-bezier(.2,1,.3,1);transform-origin:bottom right;z-index:6}
-.W.hide{opacity:0;transform:scale(.86) translateY(16px);pointer-events:none}
-@media(max-width:760px){.W{width:calc(100% - 28px);right:14px;bottom:14px;height:calc(100% - 28px)}}
-.wh{background:#12161C;color:#fff;padding:12px 15px;display:flex;align-items:center;gap:10px;flex:none}
-.wh .ico{width:30px;height:30px;border-radius:9px;background:var(--blue);display:grid;place-items:center;font-size:12px;font-weight:800;flex:none}
-.wh b{font-size:13.5px;display:block}
-.wh small{font-size:11px;color:#98A0AF;display:flex;align-items:center;gap:5px;margin-top:1px}
-.wh .dot{width:6px;height:6px;border-radius:99px;background:#38D39F;animation:pulse 1.9s infinite;flex:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.wh .x{margin-left:auto;color:#98A0AF;font-size:14px;padding:6px 8px;border-radius:7px}
-.wh .x:hover{background:#252A34;color:#fff}
-.wb{padding:15px;background:#FAFBFC;flex:1;min-height:0;display:flex;flex-direction:column;gap:11px;overflow:auto}
-.msg{display:flex;max-width:94%;animation:pop .26s cubic-bezier(.2,1.2,.4,1)}
-.msg.usr{align-self:flex-end}
-@keyframes pop{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-.bx{border-radius:13px;padding:12px 13px;line-height:1.8;font-size:12.5px;background:#fff;border:1px solid #E6E8EE;border-top-left-radius:4px}
-.msg.usr .bx{background:var(--blue);color:#fff;border-color:var(--blue);border-radius:13px;border-bottom-right-radius:4px}
-.bx b{font-weight:700}
-.typing{display:flex;gap:4px;padding:12px 14px}
-.typing i{width:6px;height:6px;border-radius:99px;background:#B6BDC9;animation:bl 1.1s infinite}
-.typing i:nth-child(2){animation-delay:.16s}.typing i:nth-child(3){animation-delay:.32s}
-@keyframes bl{0%,60%,100%{opacity:.28;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
-/* 안내 문구 + 페이지 카드 */
-.guide{margin-top:11px;font-size:12px;color:#6B7484;line-height:1.7}
-.pcard{margin-top:8px;display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid #E1E6F0;background:#F8FAFE;border-radius:11px;padding:11px 12px;transition:.15s}
-.pcard:hover{border-color:var(--blue);background:#F1F6FF;transform:translateY(-1px)}
-.pcard .pe{width:30px;height:30px;border-radius:8px;background:#fff;border:1px solid #E4E9F2;display:grid;place-items:center;font-size:15px;flex:none}
-.pcard .pt{flex:1;min-width:0}
-.pcard .pt b{display:block;font-size:12.5px;font-weight:700;color:#1F2937}
-.pcard .pt small{display:block;font-size:11px;color:#8A93A3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pcard .ar{color:#9AA2B1;font-size:13px;flex:none}
-.eggnote{margin-top:11px;font-size:10.5px;font-weight:800;letter-spacing:.06em;color:#9AA2B1}
-.egglist{margin:6px 0 0;padding-left:16px;font-size:12.5px;line-height:1.85;color:#3D4552}
-.egglist li{margin-bottom:2px}
-.pcard.lock{background:#FAFAF9;border-color:#E7E5E0}
-.pcard.lock:hover{border-color:#CFCBC3;background:#F5F4F1;transform:none}
-.pcard.lock .pt b{color:#6B6A66}
-.pcard.lock:hover .ar{color:#8A857C}
-.pcard:hover .ar{color:var(--blue)}
-/* 관련 키워드 */
-.kwrap{margin-top:11px;padding-top:10px;border-top:1px dashed #E7EAF1}
-.kwrap .kl{font-size:12px;color:#6B7484;margin-bottom:8px;line-height:1.7}
-.kws{display:flex;gap:6px;flex-wrap:wrap}
-.kw{font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid #E1E5EC;background:#fff;color:#4A5261;transition:.14s}
-.kw:hover{background:#12161C;color:#fff;border-color:#12161C}
-.kw:active{transform:scale(.95)}
-.kw i{font-style:normal;color:#9AA2B1;margin-right:2px;font-weight:700}
-.kw:hover i{color:#98A0AF}
-/* 입력 */
-.wf{border-top:1px solid #EAECF1;background:#fff;flex:none}
-.cbox{margin:11px 13px 9px;border:1px solid #D9DEE7;border-radius:12px;padding:8px 9px 8px 13px;display:flex;align-items:center;gap:8px;transition:.15s}
-.cbox:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,111,237,.1)}
-.cbox input{flex:1;border:none;outline:none;background:transparent;font-size:12.5px;min-width:0}
-.cbox input::placeholder{color:#A6AEBB}
-.cbox .snd{width:31px;height:31px;border-radius:9px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:13px;flex:none}
-.cbox .snd:active{transform:scale(.9)}
-.wfoot{font-size:10.5px;color:#A6AEBB;text-align:center;padding:0 13px 11px;line-height:1.6}
-.launcher{position:absolute;right:22px;bottom:22px;width:56px;height:56px;border-radius:50%;background:#12161C;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;box-shadow:0 14px 28px -8px rgba(18,22,28,.65);transition:.2s;opacity:0;pointer-events:none;z-index:5}
-.launcher.show{opacity:1;pointer-events:auto}
-.launcher:hover{transform:scale(1.08)}
+/* ---------- Floating Chat ---------- */
+.fab{position:fixed;right:22px;bottom:22px;z-index:60;width:58px;height:58px;border-radius:50%;
+  background:linear-gradient(140deg,var(--brand-deep),var(--blue));color:#fff;box-shadow:var(--sh-3);
+  display:grid;place-items:center;font-size:23px;transition:transform .18s}
+.fab:hover{transform:translateY(-2px) scale(1.04)}
+.fab .dot{position:absolute;top:4px;right:4px;width:11px;height:11px;border-radius:50%;background:var(--mint);border:2px solid var(--card)}
+.chatwrap{position:fixed;right:22px;bottom:92px;z-index:61;width:396px;max-width:calc(100vw - 32px);
+  height:min(660px,calc(100vh - 128px));background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);
+  box-shadow:var(--sh-3);display:flex;flex-direction:column;overflow:hidden}
+.chat-head{display:flex;align-items:center;gap:10px;padding:13px 14px;background:linear-gradient(120deg,var(--brand-deep),#2A4479);color:#fff}
+.chat-head .bot{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:16px}
+.chat-head b{font-size:14.5px;display:block;line-height:1.3}
+.chat-head small{font-size:11.5px;opacity:.72}
+.chat-head .x{margin-left:auto;color:#fff;opacity:.8;font-size:18px;width:30px;height:30px;border-radius:8px}
+.chat-head .x:hover{background:rgba(255,255,255,.14);opacity:1}
+.chat-body{flex:1;overflow-y:auto;padding:16px 14px 6px;background:var(--bg-soft);scroll-behavior:smooth}
+.chat-foot{border-top:1px solid var(--line);padding:10px 12px;background:var(--card)}
+.composer{display:flex;align-items:flex-end;gap:8px;background:var(--bg-soft);border:1px solid var(--line-strong);border-radius:16px;padding:6px 6px 6px 14px}
+.composer:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+.composer textarea{flex:1;border:none;background:none;resize:none;max-height:110px;padding:7px 0;outline:none;font-size:14px;line-height:1.5}
+.send{width:34px;height:34px;border-radius:12px;background:var(--blue);color:#fff;display:grid;place-items:center;flex:none}
+.send[disabled]{background:var(--line-strong);cursor:not-allowed}
+.chat-foot .legal{font-size:11px;color:var(--text-3);text-align:center;margin:7px 2px 0}
 
-/* 관리자 */
-.A{--nav:#131A26;--al:#E6E9EF}
-.A .mock{background:#fff;color:#1A202B;position:relative;overflow:hidden}
-.A .side{width:236px;background:var(--nav);color:#C9D1DF;flex:none;display:flex;flex-direction:column;min-height:0}
-.A .side .brand{padding:16px 16px 12px;font-weight:800;color:#fff;font-size:14px;display:flex;align-items:center;gap:8px}
-.A .side .dot{width:8px;height:8px;border-radius:99px;background:#38D39F;animation:pulse 1.9s infinite;flex:none}
-.A .side .lbl{padding:10px 16px 6px;font-size:10.5px;letter-spacing:.1em;color:#69748A;font-weight:800}
-.A .side .item{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:9px 16px;font-size:12.5px;color:#AEB8C9;border-left:2px solid transparent;transition:.12s}
-.A .side .item:hover{background:#1A2333;color:#E4E9F1}
-.A .side .item[aria-pressed="true"]{background:#1D2635;color:#fff;border-left-color:var(--blue)}
-.A .side .item .em{width:15px;text-align:center;flex:none;font-size:12px}
-.A .side .sarea{flex:1;overflow:auto;min-height:0}
-.A .side .me{padding:13px 16px;border-top:1px solid #263043;font-size:12px;color:#8B96A9;flex:none}
-.A .main{flex:1;display:flex;flex-direction:column;min-width:0}
-.A .ah{padding:15px 22px;border-bottom:1px solid var(--al);flex:none}
-.A .ah h2{margin:0;font-size:16px;font-weight:800}
-.A .ah p{margin:5px 0 0;font-size:12px;color:#8A93A3;line-height:1.75}
-.A .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 22px;flex:none}
-@media(max-width:700px){.A .kpis{grid-template-columns:repeat(2,1fr)}}
-.A .kpi{border:1px solid var(--al);border-radius:11px;padding:11px 13px}
-.A .kpi small{font-size:11px;color:#8A93A3;font-weight:600}
-.A .kpi b{display:block;font-size:21px;font-weight:800;margin-top:4px}
-.A .kpi i{font-style:normal;font-size:11px;font-weight:700}
-.A .up{color:#0E9F6E}.A .down{color:#E2564A}
-.A .abody{flex:1;overflow:auto;min-height:0}
-.A table{width:100%;border-collapse:collapse;font-size:12.5px}
-.A th{text-align:left;font-size:11px;color:#8A93A3;font-weight:700;padding:9px 22px;border-bottom:1px solid var(--al);background:#FAFBFC}
-.A td{padding:11px 22px;border-bottom:1px solid #EFF1F5}
-.A tr.gone{opacity:0;transform:translateX(20px);transition:.35s}
-.pill{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;white-space:nowrap}
-.p-new{background:#FFF1E8;color:#C25A17}
-.p-ok{background:#E7F6EF;color:#0B7A55}
-.p-wait{background:#EEF2FB;color:#2F6FED}
-.A .lnk{color:#2F6FED;font-weight:700;font-size:12px;padding:5px 9px;border-radius:7px}
-.A .lnk:hover{background:#EEF3FE}
-.A .sec2{padding:18px 22px}
-.A .blk{border:1px solid var(--al);border-radius:12px;padding:14px 16px}
-.A .blk h4{margin:0 0 3px;font-size:12.5px;font-weight:800}
-.A .blk .hint{font-size:11.5px;color:#8A93A3;margin:0 0 12px;line-height:1.75}
-.A .syncrow,.A .krow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #F0F2F6;font-size:12.5px;flex-wrap:wrap}
-.A .syncrow:last-child,.A .krow:last-child{border:none}
-.A .syncrow .em{width:18px;text-align:center;flex:none}
-.A .syncrow .nm{flex:1;font-weight:600;color:#2A3140}
-.A .syncrow .nm small{display:block;font-weight:400;font-size:11px;color:#9AA2B1;margin-top:2px}
-.A .krow .kn{font-weight:700;color:#2A3140;width:96px;flex:none}
-.A .krow .kk{display:flex;gap:5px;flex-wrap:wrap;flex:1;min-width:150px}
-.A .krow .kk i{font-style:normal;font-size:11px;font-weight:600;background:#F2F4F8;color:#5A6272;padding:4px 8px;border-radius:6px}
-.A .krow .kk .add{font-size:11px;border:1px dashed #C9D3E2;color:#5A79B5;padding:4px 8px;border-radius:6px;font-weight:700}
-.A .krow .src{font-size:11px;color:#8A93A3;flex:none}
-.badge{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;flex:none}
-.bd-ok{background:#E7F6EF;color:#0B7A55}
-.bd-wait{background:#FDF3E2;color:#8A5A00;cursor:pointer}
-.bd-off{background:#F1F3F6;color:#8A93A3}
-.A .drawer{position:absolute;right:0;top:0;bottom:0;width:368px;max-width:88%;background:#fff;border-left:1px solid var(--al);box-shadow:-18px 0 46px -26px rgba(10,14,22,.55);display:flex;flex-direction:column;transition:.26s cubic-bezier(.2,1,.3,1);z-index:8}
-.A .drawer.hide{transform:translateX(102%)}
-.A .dh2{padding:14px 18px;border-bottom:1px solid var(--al);flex:none;position:relative}
-.A .dh2 b{font-size:14px;font-weight:800;display:block}
-.A .dh2 small{font-size:11.5px;color:#8A93A3;display:block;margin-top:4px}
-.A .dh2 .x{position:absolute;right:12px;top:12px;color:#9AA2B1;font-size:16px;padding:4px 6px;border-radius:6px}
-.A .db{padding:16px 18px;overflow:auto;flex:1;min-height:0}
-.A .fld{margin-bottom:14px}
-.A .fld label{display:block;font-size:11.5px;font-weight:700;color:#5A6272;margin-bottom:6px}
-.A .fld .inp{width:100%;border:1px solid #D8DDE6;border-radius:9px;padding:10px 12px;font-size:12.5px;color:#3A4150;outline:none;line-height:1.8;background:#fff}
-.A .fld textarea.inp{min-height:100px;resize:vertical}
-.A .fld .inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,111,237,.12)}
-.A .fld .help{font-size:11px;color:#9AA2B1;margin-top:6px;line-height:1.7}
-.A .df{padding:13px 18px;border-top:1px solid var(--al);display:flex;gap:8px;flex:none}
-.A .pri{background:var(--blue);color:#fff;padding:10px 16px;border-radius:9px;font-size:12.5px;font-weight:700}
-.A .sec{border:1px solid #D8DDE6;padding:10px 16px;border-radius:9px;font-size:12.5px;font-weight:600;color:#5A6272}
+.welcome{padding:6px 2px 10px}
+.welcome h3{margin:0 0 4px;font-size:17px;letter-spacing:-.02em;color:var(--navy)}
+.welcome p{margin:0 0 18px;font-size:13.5px;color:var(--text-2)}
+.sect-label{font-size:12px;font-weight:700;color:var(--text-3);margin:0 0 9px}
+.sugg{display:flex;flex-direction:column;gap:7px}
+.sugg button{text-align:left;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+  font-size:13.5px;color:var(--text);transition:.15s;display:flex;gap:8px;align-items:flex-start}
+.sugg button:hover{border-color:var(--blue);background:var(--blue-l);color:var(--blue)}
+.sugg button i{font-style:normal;opacity:.6}
 
-#toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,20px);background:#12161C;color:#fff;padding:12px 20px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.3s;z-index:99;box-shadow:0 14px 30px -12px rgba(0,0,0,.6);max-width:88vw;text-align:center}
-#toast.on{opacity:1;transform:translate(-50%,0)}
-@media(prefers-reduced-motion:reduce){.pane.on,.msg{animation:none}}
+.msg{margin-bottom:16px;display:flex;gap:9px}
+.msg.user{justify-content:flex-end}
+.msg.user .bubble{background:var(--blue);color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:86%;font-size:14px}
+.msg .ava{width:28px;height:28px;border-radius:9px;background:linear-gradient(140deg,var(--brand-deep),var(--blue));color:#fff;
+  display:grid;place-items:center;font-size:14px;flex:none}
+.ans{background:var(--card);border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:13px 15px;max-width:calc(100% - 38px);box-shadow:var(--sh-1)}
+.ans .body{font-size:14px;white-space:pre-wrap}
+.ans .body b{color:var(--navy)}
+.ans .body .kv{display:block;padding-left:10px;border-left:2px solid var(--line);margin:3px 0;color:var(--text-2);font-size:13.5px}
+.block{margin-top:13px;padding-top:12px;border-top:1px dashed var(--line)}
+.block > .t{font-size:12px;font-weight:700;color:var(--text-3);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.srcbox{background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:7px}
+.srcbox .name{font-size:13.5px;font-weight:700;color:var(--navy);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.srcbox .meta{font-size:12px;color:var(--text-3);margin-top:3px}
+.srcbox a{font-size:12.5px;font-weight:600;display:inline-block;margin-top:6px}
+.kw{display:flex;flex-wrap:wrap;gap:6px}
+.kw button{padding:5px 11px;border-radius:999px;font-size:12.5px;border:1px solid var(--line);background:var(--card);color:var(--text-2)}
+.kw button:hover{border-color:var(--mint);color:var(--mint);background:var(--mint-l)}
+.relq{display:flex;flex-direction:column;gap:6px}
+.relq button{text-align:left;font-size:13px;color:var(--blue);padding:7px 10px;border-radius:9px;background:var(--blue-l)}
+.relq button:hover{background:var(--card);outline:1px solid var(--blue)}
+.fb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--text-3)}
+.fb button{padding:5px 11px;border:1px solid var(--line);border-radius:999px;font-size:12.5px;background:var(--card)}
+.fb button:hover{border-color:var(--blue-d)}
+.fb button.on{background:var(--mint-l);border-color:var(--mint);color:var(--mint);font-weight:600}
+.fb button.on.bad{background:var(--red-l);border-color:var(--red);color:var(--red)}
+.fbform{margin-top:10px;background:var(--bg-soft);border-radius:12px;padding:11px}
+.fbform label{display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 2px;cursor:pointer}
+.nogo{background:var(--amber-l);border:1px solid rgba(217,119,6,.28)}
+.typing{display:flex;gap:4px;padding:14px 16px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--text-3);display:block;animation:bl 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.18s} .typing i:nth-child(3){animation-delay:.36s}
+@keyframes bl{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+/* ---------- 모달 ---------- */
+.modal{position:fixed;inset:0;z-index:90;background:rgba(14,30,60,.42);display:grid;place-items:center;padding:18px}
+.modal .sheet{background:var(--card);border-radius:var(--r-xl);box-shadow:var(--sh-3);width:min(520px,100%);max-height:88vh;overflow-y:auto}
+.modal .sheet.wide{width:min(780px,100%)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 6px}
+.sheet-head h3{margin:0;font-size:17.5px;letter-spacing:-.02em;color:var(--navy)}
+.sheet-body{padding:12px 22px 20px}
+.sheet-foot{padding:0 22px 20px;display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+.convo-peek{background:var(--bg-soft);border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--text-2);max-height:150px;overflow:auto}
+.convo-peek div{margin-bottom:5px}
+
+/* ---------- 로그인 ---------- */
+.login{min-height:100vh;display:grid;place-items:center;padding:24px;background:
+  radial-gradient(900px 480px at 12% -8%,var(--blue-l),transparent 60%),
+  radial-gradient(760px 420px at 96% 8%,var(--mint-l),transparent 62%),var(--bg)}
+.login .box{width:min(430px,100%);background:var(--card);border:1px solid var(--line);border-radius:var(--r-xl);
+  box-shadow:var(--sh-2);padding:30px 28px}
+.login h2{margin:16px 0 4px;font-size:21px;letter-spacing:-.03em;color:var(--navy)}
+.login p{margin:0 0 22px;font-size:13.5px;color:var(--text-2)}
+.acct{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:13px 14px;border:1px solid var(--line);
+  border-radius:14px;margin-bottom:9px;background:var(--card);transition:.15s}
+.acct:hover{border-color:var(--blue);background:var(--blue-l)}
+.acct .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:16px;flex:none}
+.acct b{display:block;font-size:14px} .acct span{font-size:12.5px;color:var(--text-3)}
+
+/* ---------- Admin ---------- */
+.admin{display:flex;min-height:100vh;background:var(--bg-soft)}
+.side{width:246px;flex:none;background:var(--sidebar);color:#C9D5E8;padding:18px 12px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.side .logo{display:flex;align-items:center;gap:9px;padding:6px 10px 18px;color:#fff;font-weight:700;letter-spacing:-.02em}
+.side .logo .sq{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--mint));display:grid;place-items:center;font-size:13px}
+.side .grp{margin:14px 0 6px;padding:0 12px;font-size:11px;font-weight:700;color:#7C8DA8}
+.side a{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;color:#C9D5E8;font-size:13.5px;font-weight:500}
+.side a:hover{background:rgba(255,255,255,.07);color:#fff}
+.side a.on{background:linear-gradient(120deg,var(--blue),#3B6FF0);color:#fff;font-weight:600}
+.side a .b{margin-left:auto;background:rgba(255,255,255,.16);border-radius:999px;padding:1px 7px;font-size:11px}
+.side a.on .b{background:rgba(255,255,255,.26)}
+.side .sub a{padding-left:32px;font-size:13px}
+.side .foot{margin-top:18px;padding:12px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:#8A9BB5}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);padding:13px 22px;display:flex;align-items:center;gap:12px}
+.topbar h2{margin:0;font-size:17px;letter-spacing:-.02em;color:var(--navy)}
+.topbar .grow{flex:1}
+.burger{display:none}
+.content{padding:22px;max-width:1280px;width:100%}
+.kpis{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 17px}
+.kpi .l{font-size:12.5px;color:var(--text-3);font-weight:600}
+.kpi .v{font-size:27px;font-weight:700;letter-spacing:-.04em;color:var(--navy);margin:6px 0 2px;line-height:1.1}
+.kpi .d{font-size:12px;color:var(--text-3)}
+.kpi .d.up{color:var(--green)} .kpi .d.down{color:var(--red)}
+.grid2{display:grid;gap:14px;grid-template-columns:1.25fr .95fr;align-items:start}
+.grid3{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(272px,1fr))}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden}
+.panel > h3{margin:0;padding:15px 18px 0;font-size:15px;letter-spacing:-.02em;color:var(--navy);display:flex;align-items:center;gap:8px}
+.panel > h3 .r{margin-left:auto;font-size:12.5px;font-weight:500;color:var(--text-3)}
+.panel .pad{padding:14px 18px 18px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+thead th{text-align:left;font-size:12px;color:var(--text-3);font-weight:700;padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--bg-soft)}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--bg-soft)}
+td .ttl{font-weight:600;color:var(--text)}
+.rankrow{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--line)}
+.rankrow:last-child{border-bottom:none}
+.rankrow .n{width:21px;height:21px;border-radius:7px;background:var(--bg-sunk);color:var(--text-2);display:grid;place-items:center;font-size:11.5px;font-weight:700;flex:none}
+.rankrow:nth-child(-n+3) .n{background:var(--blue);color:#fff}
+.rankrow .q{flex:1;font-size:13.5px;min-width:0}
+.rankrow .c{font-size:12.5px;color:var(--text-3);font-weight:600;white-space:nowrap}
+.bar{height:6px;border-radius:999px;background:var(--bg-sunk);overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--blue),var(--mint))}
+.gap{border:1px solid rgba(217,119,6,.3);background:var(--amber-l);border-radius:14px;padding:13px 15px;margin-bottom:10px}
+.gap .q{font-weight:700;color:var(--navy);font-size:14px}
+.gap .s{font-size:12.5px;color:var(--text-2);margin:5px 0 9px}
+.gap .s b{color:var(--amber)}
+.empty{padding:34px 18px;text-align:center;color:var(--text-3);font-size:13.5px}
+.empty b{display:block;color:var(--text-2);margin-bottom:4px;font-size:14.5px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);padding:0 18px;overflow-x:auto}
+.tabs button{padding:11px 13px;font-size:13.5px;font-weight:600;color:var(--text-3);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--blue);border-bottom-color:var(--blue)}
+.vtimeline{position:relative;padding-left:20px}
+.vtimeline::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.vitem{position:relative;padding:8px 0}
+.vitem::before{content:"";position:absolute;left:-19px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--line-strong);border:2px solid var(--card)}
+.vitem.cur::before{background:var(--mint)} .vitem.next::before{background:var(--purple)}
+.testbox{background:var(--bg-soft);border:1px solid var(--line);border-radius:14px;padding:15px}
+.roleline{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line)}
+.roleline:last-child{border-bottom:none}
+.perm{font-size:12.5px;color:var(--text-2)}
+.chartwrap{overflow-x:auto}
+svg .axis{stroke:var(--line);stroke-width:1}
+svg .lbl{font-size:10px;fill:var(--text-3)}
+svg .val{font-size:10px;fill:var(--text-2);font-weight:600}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--text-2);margin-top:8px}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:120;background:var(--brand-deep);color:#fff;
+  padding:11px 18px;border-radius:12px;font-size:13.5px;box-shadow:var(--sh-3);max-width:90vw}
+
+
+@media (max-width:1040px){ .grid2{grid-template-columns:1fr} }
+@media (max-width:860px){
+  .side{position:fixed;left:0;top:0;z-index:70;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--sh-3)}
+  .side.open{transform:none}
+  .burger{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;border:1px solid var(--line)}
+  .scrim{position:fixed;inset:0;background:rgba(14,30,60,.4);z-index:69}
+  .content{padding:16px}
+  .portal{padding:22px 16px 120px}
+}
+@media (max-width:560px){
+  .chatwrap{right:0;left:0;bottom:0;width:100%;max-width:100%;height:100dvh;border-radius:0;border:none}
+  .fab{right:16px;bottom:16px}
+  .kpi .v{font-size:23px}
+  .topbar{padding:11px 14px}
+}
 </style>
 </head>
 <body>
-<div class="shell">
-
-  <div class="viewbar">
-    <div class="seg" id="segbar">
-      <button data-v="user" aria-pressed="true">사용자 화면</button>
-      <button data-v="admin" aria-pressed="false">관리자 화면</button>
-    </div>
-  </div>
-
-  <div class="stage">
-
-    <div class="pane on N" data-pane="user">
-      <div class="mock">
-        <aside class="nside">
-          <div class="nws"><span class="sq">S</span>시몬스 워크스페이스</div>
-          <button class="nitem"><span class="em">🔍</span>검색</button>
-          <button class="nitem"><span class="em">🏠</span>홈</button>
-          <div class="nsec">워크스페이스</div>
-          <button class="nitem"><span class="em">📌</span>공지사항</button>
-          <button class="nitem on" id="navRoot"><span class="em">🧭</span>HR 가이드</button>
-          <button class="nitem nsub" data-page="attend">근태 · 연차</button>
-          <button class="nitem nsub" data-page="pay">급여 · 정산</button>
-          <button class="nitem nsub" data-page="benefit">복리후생</button>
-          <button class="nitem nsub" data-page="cert">증명서 발급</button>
-          <button class="nitem nsub" data-page="work">근무 형태</button>
-          <button class="nitem"><span class="em">🗂</span>인사부문 내부</button>
-        </aside>
-        <div class="npage">
-          <div class="ntop" id="nCrumb"></div>
-          <div class="nbody scroll" id="nBody"></div>
-        </div>
-
-        <div class="W" id="widget">
-          <div class="wh">
-            <span class="ico">HR</span>
-            <div><b>HR 도우미</b><small><span class="dot"></span>노션 HR 가이드 · 8분 전 동기화</small></div>
-            <button class="x" id="wClose">✕</button>
-          </div>
-          <div class="wb scroll" id="chat"></div>
-          <div class="wf">
-            <form class="cbox" id="form">
-              <input id="inp" placeholder="궁금한 걸 편하게 적어 주세요" autocomplete="off">
-              <button class="snd" type="submit">↑</button>
-            </form>
-            <div class="wfoot">노션 문서에 있는 내용만 안내합니다.</div>
-          </div>
-        </div>
-        <button class="launcher" id="launcher">HR</button>
-      </div>
-    </div>
-
-    <div class="pane A" data-pane="admin">
-      <div class="mock">
-        <aside class="side">
-          <div class="brand"><span class="dot"></span>HR 도우미 관리자</div>
-          <div class="sarea scroll">
-            <div class="lbl">운영</div>
-            <button class="item nav" data-t="miss" aria-pressed="true"><span class="em">◎</span><span class="t">안내 못한 질문</span></button>
-            <button class="item nav" data-t="kw"><span class="em">#</span><span class="t">키워드 · 페이지 연결</span></button>
-            <button class="item nav" data-t="sync"><span class="em">🧭</span><span class="t">노션 연동</span></button>
-          </div>
-          <div class="me">최예솔 · 인사부문</div>
-        </aside>
-        <div class="main">
-          <div class="ah">
-            <h2 id="aTitle">안내 못한 질문</h2>
-            <p id="aLead">노션에 해당 내용이 없어 페이지를 안내하지 못한 질문입니다. <b>문단을 추가</b>하면 다음부터 그 페이지로 안내합니다.</p>
-          </div>
-          <div class="kpis">
-            <div class="kpi"><small>이번 주 질문</small><b>1,284</b><i class="up">▲ 12%</i></div>
-            <div class="kpi"><small>페이지 안내 성공</small><b>84%</b><i class="up">▲ 5%p</i></div>
-            <div class="kpi"><small>안내 못함</small><b id="aMiss">4</b><i class="down">▲ 신규</i></div>
-            <div class="kpi"><small>카드 클릭률</small><b>62%</b><i class="up">▲ 8%p</i></div>
-          </div>
-          <div class="abody scroll">
-            <div data-p="miss">
-              <table>
-                <thead><tr><th style="width:46%">질문</th><th>횟수</th><th>상태</th><th></th></tr></thead>
-                <tbody id="aTable"></tbody>
-              </table>
-            </div>
-            <div data-p="kw" hidden><div class="sec2"><div class="blk">
-              <h4>키워드 · 페이지 연결</h4>
-              <p class="hint">구성원이 쓰는 표현을 노션 페이지에 걸어 둡니다. 여기 등록된 표현이 답변 아래 #관련 키워드로도 나옵니다.</p>
-              <div id="kwList"></div>
-            </div></div></div>
-            <div data-p="sync" hidden><div class="sec2"><div class="blk">
-              <h4>연결된 노션 페이지</h4>
-              <p class="hint">노션에서 문서를 고치면 안내 내용도 같이 바뀝니다. 답변을 따로 관리하지 않습니다.</p>
-              <div class="syncrow"><span class="em">🧭</span><span class="nm">HR 가이드<small>하위 12개 페이지 · 8분 전 동기화</small></span><span class="badge bd-ok">동기화됨</span></div>
-              <div class="syncrow"><span class="em">📌</span><span class="nm">공지사항<small>최근 30일 문서만</small></span><span class="badge bd-ok">동기화됨</span></div>
-              <div class="syncrow"><span class="em">📚</span><span class="nm">온보딩<small>노션에서 수정 감지 · 반영 대기</small></span><button class="badge bd-wait" data-sync>지금 반영</button></div>
-              <div class="syncrow"><span class="em">🗂</span><span class="nm">인사부문 내부<small>내부 문서 · 챗봇 공개 안 함</small></span><span class="badge bd-off">제외</span></div>
-            </div></div></div>
-          </div>
-
-          <aside class="drawer hide" id="drawer">
-            <div class="dh2"><b>노션에 문단 추가</b><small id="drQ"></small><button class="x" id="drX">✕</button></div>
-            <div class="db">
-              <div class="fld"><label>어느 페이지에 넣을까요</label>
-                <select class="inp" id="drPage">
-                  <option>HR 가이드 / 근태 · 연차</option><option>HR 가이드 / 급여 · 정산</option>
-                  <option>HR 가이드 / 복리후생</option><option>HR 가이드 / 증명서 발급</option>
-                  <option>HR 가이드 / 근무 형태</option>
-                </select></div>
-              <div class="fld"><label>추가할 문단</label><textarea class="inp" id="drBody"></textarea>
-                <div class="help">구성원이 읽고 바로 이해할 문장으로 적어 주세요. 이 문단이 그대로 안내됩니다.</div></div>
-            </div>
-            <div class="df"><button class="pri" id="drSave">노션에 저장</button><button class="sec" id="drCancel">취소</button></div>
-          </aside>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<div id="toast"></div>
-
+<div id="root"></div>
+<div id="layer"></div>
 <script>
-/* ========== 노션 페이지 ========== */
-const PAGES={
- attend:{em:"🧭",title:"근태 · 연차 가이드",crumb:["HR 가이드","근태 · 연차"],
-  call:"취업규칙 제32조 기준입니다. 개인별 잔여 일수는 오른쪽 아래 <b>HR 도우미</b>에 물어보세요.",
-  blocks:[{h:"연차 부여 기준"},
-   {p:"입사 1년 미만은 매월 개근 시 1일씩, 1년 이상은 연 15일이 부여되며 3년마다 1일씩 가산됩니다."},
-   {h:"이월과 소멸"},
-   {p:"미사용 연차는 <span class='mk'>최대 5일까지 다음 연도 6월 30일</span>까지 이월됩니다. 이후 잔여분은 자동 소멸되며 수당으로 지급되지 않습니다."},
-   {p:"이월 신청은 매년 12월 15일부터 31일 사이에 그룹웨어 근태 메뉴에서 본인이 직접 합니다."},
-   {h:"반차 · 반반차"},
-   {p:"반차는 4시간, 반반차는 2시간 단위로 사용합니다. <span class='mk'>반반차는 하루 1회, 월 4회</span>까지 쓸 수 있습니다."},
-   {p:"반차 사용일에 연장근로가 발생하면 실근로시간이 8시간을 넘는 부분에 대해서만 연장수당을 지급합니다."},
-   {h:"경조 휴가"},
-   {p:"본인 결혼 5일, 자녀 출생 10일, 부모 사망 5일, 조부모 사망 3일입니다."}]},
- pay:{em:"₩",title:"급여 · 정산 가이드",crumb:["HR 가이드","급여 · 정산"],
-  call:"급여명세서와 연말정산 일정은 이 페이지에서 관리합니다.",
-  blocks:[{h:"급여 지급일"},
-   {p:"급여는 매월 <span class='mk'>25일</span>에 지급하며, 지급일이 휴일이면 직전 영업일에 지급합니다."},
-   {p:"급여명세서는 급여일 3일 전부터 그룹웨어에서 확인할 수 있습니다."},
-   {h:"연말정산"},
-   {p:"간소화 자료 제출은 매년 1월 둘째 주까지이며, 환급액은 2월 급여에 반영됩니다."},
-   {h:"식대"},
-   {p:"식대는 월 20만 원 한도로 비과세 처리되며, <span class='mk'>재택근무일에도 동일하게</span> 지급됩니다."}]},
- benefit:{em:"◈",title:"복리후생 가이드",crumb:["HR 가이드","복리후생"],
-  call:"건강검진·경조 지원은 모두 이 페이지 기준입니다.",
-  blocks:[{h:"건강검진"},
-   {p:"검진 대상자는 해당 연도 <span class='mk'>12월 31일</span>까지 수검을 완료해야 하며, 미수검분은 다음 해로 이월되지 않습니다."},
-   {p:"예약은 그룹웨어 복리후생 메뉴에서 진행하고, 지정 병원은 매년 3곳으로 갱신됩니다."},
-   {p:"<span class='mk'>계약직·파견 인력도 동일하게 대상</span>이며, 배우자 검진은 격년으로 30만 원까지 지원합니다."},
-   {h:"경조 지원"},
-   {p:"경조사비는 사유 발생일로부터 <span class='mk'>90일 이내</span>에 신청해야 하며, 기한이 지나면 소급 지급되지 않습니다."},
-   {p:"본인 결혼 100만 원, 자녀 출생 50만 원, 부모 사망 100만 원이며 신청 시 증빙 서류를 첨부합니다."}]},
- cert:{em:"▤",title:"증명서 발급 안내",crumb:["HR 가이드","증명서 발급"],
-  call:"대부분의 증명서는 그룹웨어에서 즉시 발급됩니다.",
-  blocks:[{h:"재직 · 경력증명서"},
-   {p:"그룹웨어 증명서 발급 메뉴에서 즉시 발급되며, <span class='mk'>영문 발급도 같은 화면</span>에서 가능합니다."},
-   {p:"직인 날인본은 신청 후 <span class='mk'>1영업일</span> 이내 우편 또는 방문 수령으로 제공합니다."},
-   {h:"원천징수영수증"},
-   {p:"전년도분은 3월 이후 발급 가능하며, 재직 중 언제든 열람할 수 있습니다."}]},
- work:{em:"◇",title:"근무 형태 가이드",crumb:["HR 가이드","근무 형태"],
-  call:"재택·유연근무 규정을 모아 둔 페이지입니다.",
-  blocks:[{h:"재택근무"},
-   {p:"재택근무는 <span class='mk'>최소 3일 전</span>까지 팀장 승인을 받아 신청하며, 당일 신청은 승인되지 않습니다."},
-   {p:"사용 한도는 <span class='mk'>월 8일</span>이며, 팀 사정에 따라 팀장이 조정할 수 있습니다."},
-   {h:"유연근무"},
-   {p:"코어타임은 10시부터 16시까지이며, 출근 시각은 7시에서 10시 사이에서 고를 수 있습니다."}]}
-};
-const PN={attend:"근태 · 연차",pay:"급여 · 정산",benefit:"복리후생",cert:"증명서 발급",work:"근무 형태"};
+"use strict";
+/* =========================================================================
+ * 1. KNOWLEDGE BASE
+ *    출처: 사내 게시판 raw 데이터 (HR 자주묻는질문 / 복리후생 / 교육)
+ *    - 파일: HR게시판_챗봇탑재_Content_검토요청_V1_260916.xlsx (총 120건)
+ *    - is_demo:true 인 문서는 raw 데이터에 원문이 없어 데모용으로 채운 가상 기준
+ *    TODO: 실제 서비스 시 이 배열을 DB(Knowledge 테이블) + 벡터 인덱스로 교체
+ * ========================================================================= */
+const TODAY = new Date();
+const K = (o) => Object.assign({
+  category:'기타', version:'v1.0', effective_date:'2024-01-01', expiry_date:null,
+  owner:'인사운영팀', source_url:'', is_active:true, visibility:'ALL',
+  board:'HR 자주묻는질문', keywords:[], faqs:[], family:null, is_demo:false
+}, o);
 
-/* ========== 지식 (질문 → 짧은 답 + 안내 페이지 + 관련 키워드) ========== */
-const KB=[
- {k:["이월","연차이월","소멸","넘길"],
-  a:"미사용 연차는 <b>최대 5일까지 다음 해 6월 30일</b>까지 이월됩니다.",
-  p:"attend",n:3,sub:"이월과 소멸",kw:["이월 신청 방법","잔여 연차","반차 규정"]},
- {k:["잔여","남았","며칠남","몇일남","내연차"],
-  a:"예솔 님의 잔여 연차는 <b>7일</b>입니다. 이 중 5일은 이월 가능해요.",
-  p:"attend",n:3,sub:"이월과 소멸",sys:true,kw:["연차 이월","이월 신청 방법","반차 규정"]},
- {k:["이월신청","신청방법","어떻게신청"],
-  a:"이월 신청은 <b>12월 15~31일</b>에 그룹웨어 근태 메뉴에서 직접 하시면 됩니다.",
-  p:"attend",n:4,sub:"이월 신청",kw:["연차 이월","반차 규정","경조 휴가"]},
- {k:["반차","반반차","조퇴"],
-  a:"반차는 4시간, 반반차는 2시간 단위입니다. 반반차는 <b>월 4회</b>까지예요.",
-  p:"attend",n:6,sub:"반차 · 반반차",kw:["반차 쓴 날 야근","연차 이월","유연근무"]},
- {k:["야근","연장","초과근무","수당"],
-  a:"반차 쓴 날은 <b>실근로 8시간 초과분</b>에 대해서만 연장수당이 나옵니다.",
-  p:"attend",n:7,sub:"반차 · 반반차",kw:["반차 규정","급여일","식대"]},
- {k:["경조휴가","휴가일수","결혼휴가"],
-  a:"본인 결혼 5일, 자녀 출생 10일, 부모 사망 5일, 조부모 사망 3일입니다.",
-  p:"attend",n:9,sub:"경조 휴가",kw:["경조사비 신청","연차 이월"]},
- {k:["건강검진","검진","병원"],
-  a:"올해 대상자는 <b>12월 31일</b>까지 받으셔야 합니다.",
-  p:"benefit",n:1,sub:"건강검진",kw:["검진 예약 방법","계약직도 대상","배우자 검진"]},
- {k:["예약","검진예약"],
-  a:"그룹웨어 복리후생 &gt; 건강검진에서 예약하시면 됩니다. 지정 병원은 3곳이에요.",
-  p:"benefit",n:2,sub:"건강검진",kw:["건강검진 기한","계약직도 대상"]},
- {k:["계약직","파견","배우자"],
-  a:"계약직·파견도 검진 대상입니다. 배우자 검진은 격년으로 30만 원까지 지원돼요.",
-  p:"benefit",n:3,sub:"건강검진",kw:["건강검진 기한","검진 예약 방법"]},
- {k:["경조","축의","조의","결혼","장례","부고"],
-  a:"경조사비는 사유 발생일로부터 <b>90일 이내</b>에 신청하셔야 합니다.",
-  p:"benefit",n:5,sub:"경조 지원",kw:["경조 지급 금액","경조 휴가","건강검진"]},
- {k:["금액","얼마","지급액"],
-  a:"본인 결혼 100만 원, 자녀 출생 50만 원, 부모 사망 100만 원입니다.",
-  p:"benefit",n:6,sub:"경조 지원",kw:["경조사비 신청","경조 휴가"]},
- {k:["재직증명","증명서","경력증명","서류"],
-  a:"그룹웨어 증명서 발급에서 즉시 발급됩니다. 영문도 같은 화면에서 가능해요.",
-  p:"cert",n:1,sub:"재직 · 경력증명서",kw:["직인 날인본","원천징수영수증","급여명세서"]},
- {k:["직인","날인"],
-  a:"직인 날인본은 신청 후 <b>1영업일</b> 이내에 받으실 수 있습니다.",
-  p:"cert",n:2,sub:"재직 · 경력증명서",kw:["재직증명서 발급","원천징수영수증"]},
- {k:["원천징수"],
-  a:"전년도분은 3월 이후 발급 가능하고, 재직 중 언제든 열람할 수 있습니다.",
-  p:"cert",n:4,sub:"원천징수영수증",kw:["연말정산 일정","재직증명서 발급"]},
- {k:["재택","원격","리모트"],
-  a:"재택근무는 <b>최소 3일 전</b>까지 팀장 승인을 받아 신청합니다.",
-  p:"work",n:1,sub:"재택근무",kw:["재택 사용 한도","재택 시 식대","유연근무"]},
- {k:["한도","월8일","며칠까지쓸"],
-  a:"재택 사용 한도는 <b>월 8일</b>입니다. 팀 사정에 따라 조정될 수 있어요.",
-  p:"work",n:2,sub:"재택근무",kw:["재택근무 신청","유연근무"]},
- {k:["유연근무","코어타임","출근시간"],
-  a:"코어타임은 <b>10시~16시</b>이고, 출근은 7시~10시 사이에서 고르실 수 있어요.",
-  p:"work",n:4,sub:"유연근무",kw:["재택근무 신청","반차 규정"]},
- {k:["급여일","월급","월급날","급여언제"],
-  a:"급여는 매월 <b>25일</b>에 지급되고, 휴일이면 직전 영업일로 당겨집니다.",
-  p:"pay",n:1,sub:"급여 지급일",kw:["급여명세서","연말정산 일정","식대"]},
- {k:["명세서"],
-  a:"급여명세서는 급여일 <b>3일 전</b>부터 그룹웨어에서 보실 수 있습니다.",
-  p:"pay",n:2,sub:"급여 지급일",kw:["급여일","연말정산 일정"]},
- {k:["연말정산","간소화","환급"],
-  a:"간소화 자료는 <b>1월 둘째 주</b>까지 제출하시고, 환급은 2월 급여에 반영됩니다.",
-  p:"pay",n:4,sub:"연말정산",kw:["원천징수영수증","급여일"]},
- {k:["식대","밥값","점심"],
-  a:"식대는 월 20만 원 한도 비과세이고, <b>재택근무일에도 동일하게</b> 나옵니다.",
-  p:"pay",n:6,sub:"식대",kw:["급여일","재택근무 신청"]},
- {k:["침대","매트리스","시몬스","흔들리지"],
-  a:"흔들리지 않는 편안함은 매트리스 담당이고, 저는 <b>흔들리지 않는 연차 규정</b> 담당입니다.",
-  p:"attend",n:1,sub:"연차 부여 기준",kw:["연차 이월","건강검진 기한","급여일"]}
+const KB_SEED = [
+/* ---- 휴가 · 연차 ---- */
+K({id:'K-001', family:'F-ANNUAL', title:'연차 산정 기준 및 연차 신청 방법', category:'휴가·연차',
+  version:'v2.0', effective_date:'2026-06-11', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/141358',
+  keywords:['연차','연차 발생','회계연도','반차','반반차','마이너스 연차','연차 선사용','휴가 신청','flex'],
+  faqs:['연차는 언제 발생하나요?','연차 산정 기준이 뭔가요?','반차 신청은 어떻게 하나요?','연차가 없는데 쓸 수 있나요?'],
+  content:`당사는 입사일 기준이 아닌 '회계연도' 기준으로 연차를 관리하며, 매년 1월 1일에 연차가 발생합니다.
+사용 단위: 연차 1개 / 반차 0.5개 / 반반차 0.25개
+잔여 연차가 0개여도 마이너스(연차 선사용) 사용이 가능하며, 신청 시 자동 차감됩니다. 선사용분은 다음 해 발생 연차에서 차감됩니다.
+단, 퇴사 시에는 '입사일' 기준으로 재산정합니다. (취업규칙 제20조 4항)
+
+[연차 신청 방법] 연차·반차·반반차 모두 동일
+1. HR 플랫폼 flex(https://flex.team) 접속
+2. 좌측 메뉴 [휴가] 선택
+3. [휴가 등록] → [연차] 선택 후 일정 입력
+※ 연차는 '상세일정편집'에서 '하루종일', 반차는 '오전반차/오후반차', 반반차는 '시간차'를 선택합니다.`}),
+K({id:'K-002', family:'F-UNPLUGGED', title:'언플러그드 휴가(정기휴가) 운영 기준', category:'휴가·연차',
+  version:'v2.0', effective_date:'2026-06-11', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/141360',
+  keywords:['언플러그드 휴가','정기휴가','장기휴가','리프레시','휴가 분할'],
+  faqs:['언플러그드 휴가는 언제 쓸 수 있나요?','정기휴가 나눠서 쓸 수 있나요?','정기휴가는 언제 생기나요?'],
+  content:`생성 시기: 매년 4월 1일
+사용 가능 시기: 4월 ~ 12월
+
+[상신 방법] flex → [휴가] → [휴가 등록] → [정기휴가]
+
+유의사항
+- 신규 입사자는 당해 7월 이전 입사자에 한해 지급합니다.
+- 미사용 정기휴가는 보상하지 않습니다.
+- 슬립마스터/N32크루는 매장 운영을 위해 분할 사용이 가능하며, 그 외 구성원은 분할 사용이 불가합니다.
+- 퇴직 예정자는 사용할 수 없으며, 퇴직을 예정하고 사용한 경우 연차로 대체 차감됩니다.`}),
+K({id:'K-003', family:'F-VACATION-CHANGE', title:'휴가제도 개편 안내', category:'휴가·연차',
+  version:'v1.0', effective_date:'2026-04-10', owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/134260',
+  keywords:['휴가제도','개편','휴가 개정'],
+  faqs:['휴가제도가 어떻게 바뀌었나요?'],
+  content:`2026년 4월 휴가제도가 개편되었습니다. 상세 내용은 게시물 첨부 이미지 5장을 확인해 주세요.
+개편 반영된 세부 기준은 '연차 산정 기준'과 '언플러그드 휴가(정기휴가)' 문서에서 확인할 수 있습니다.
+문의: 인사운영팀`}),
+
+/* ---- 휴직 · 모성보호 ---- */
+K({id:'K-010', family:'F-LEAVE', title:'휴직·복직 신청 및 육아휴직 운영 기준', category:'휴직·모성보호',
+  version:'v2.0', effective_date:'2026-06-11', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/141366',
+  keywords:['휴직','복직','육아휴직','휴직원','복직원','무급','고용보험','산전','산후'],
+  faqs:['육아휴직은 얼마나 쓸 수 있나요?','육아휴직 중에 급여가 나오나요?','휴직 신청은 어디서 하나요?','복직 신청 방법 알려줘'],
+  content:`[휴직/복직원 작성]
+1. flex(https://flex.team) 접속
+2. 좌측 메뉴 [워크플로우] 선택
+3. 우측 상단 [문서 작성하기] → [휴/복직원] → 필요한 문서 선택
+
+[육아휴직]
+1. 사용 기한: 산전/산후로 구분되며 최대 1년 사용 가능(분할 사용 가능, 산전 육아휴직은 분할 사용 제한 없음)
+2. 유·무급: 무급으로 회사 급여 지급 사항이 없으며, 육아휴직급여는 고용보험센터에 개별 신청합니다.
+3. 신청: flex [워크플로우] '휴직원' 상신 (상신 시 임신확인서 필수 첨부)
+4. 신청 전 인사운영팀 근태 담당자에게 메일 필요 — 육아휴직 신청기간을 기재하고 임신확인서(산전) 또는 주민등록등본(산후)을 첨부해 발송합니다.`}),
+K({id:'K-011', title:'임신·육아기 근로시간 단축 및 태아검진 시간', category:'휴직·모성보호',
+  version:'v1.0', effective_date:'2026-07-20', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/145836',
+  keywords:['임신기 근로시간 단축','육아기 근로시간 단축','단축근무','태아검진','모성보호'],
+  faqs:['임신 중에 근로시간을 줄일 수 있나요?','육아기 단축근무 대상이 되나요?','태아검진 시간은 어떻게 신청하나요?'],
+  content:`[임신기 근로시간 단축]
+대상: 임신 후 12주(84일) 이내 또는 32주(218일) 이후 여성 근로자 / 단축시간: 1일 2시간 / 서류: 임신확인서
+
+[육아기 근로시간 단축]
+대상: 만 12세 이하 또는 초등학교 6학년 이하 자녀를 둔 근로자
+단축시간: 1일 최소 1시간 ~ 최대 5시간
+기간: 자녀 1명당 최대 1년(육아휴직 미사용 시 미사용 기간을 가산하여 최대 3년), 최소 1개월 이상 사용
+서류: 주민등록등본 또는 가족관계증명서(자녀 주민등록번호 표기 필수)
+신청: flex → [워크플로우] → [임신·육아기 단축근무 신청]
+
+[태아검진 시간]
+신청시간: 1일 4시간
+기간: 1~28주 4주마다 1회, 29~36주 2주마다 1회, 37주~산전 1주마다 1회
+서류: 임신확인서, 검진 예약 문자
+신청: flex → [워크플로우] → [태아 검진 시간 신청서]`}),
+K({id:'K-012', title:'출산휴가·유산휴가·가족돌봄휴가 신청 기준', category:'휴직·모성보호',
+  version:'v2.0', effective_date:'2026-06-11', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/141370',
+  keywords:['출산휴가','산전후휴가','유산휴가','가족돌봄휴가','임신확인서','모성보호'],
+  faqs:['출산휴가는 며칠인가요?','가족돌봄휴가는 유급인가요?','유산휴가 기준이 궁금해요'],
+  content:`[출산휴가]
+1. 사용 기한
+ - 출산 전후 최대 90일(단, 출산 이후 45일 확보 필요)
+ - 둘 이상 자녀 임신 시 최대 120일(출산 이후 60일 확보 필요)
+ - 미숙아가 신생아 집중치료실에 입원한 경우 최대 100일(출산 이후 45일 확보 필요)
+2. 신청: flex → [휴가] → [산전후휴가] 작성 (상신 시 임신확인서 필수 첨부)
+3. 신청 전 인사운영팀 근태 담당자에게 메일로 기간 안내를 받아야 합니다.
+
+[유산휴가] (2025.2.23 개정)
+임신 15주 이내 10일 / 16~21주 30일 / 22~27주 60일 / 28주 이상 90일
+필요 서류: 진단서 / 급여: 당사 100% 지급 후 급여 대위신청
+신청: 인사운영팀으로 진단서와 함께 메일 송부(양식 없음) → 확인 후 flex [휴가] 탭에 '유산휴가' 별도 부여
+
+[가족돌봄휴가]
+사용 기한: 최대 10일(일 단위 분할 사용 가능) / 급여: 무급
+신청: flex → [휴가] → [가족돌봄휴가] 작성 (가족관계증명서 필수 첨부), 신청 전 인사운영팀 근태 담당자 메일 필요`}),
+
+/* ---- 경조 ---- */
+K({id:'K-020', family:'F-GYEONGJO', title:'사내 경조사 지원 기준(경조금·경조휴가)', category:'경조',
+  version:'v2.0', effective_date:'2026-04-01', owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/134263',
+  keywords:['경조휴가','경조금','결혼','초상','조의','장례','환갑','칠순','돌','백일','경조사회'],
+  faqs:['경조휴가 기준이 궁금해요','결혼하면 휴가 며칠인가요?','부모님 상을 당하면 경조금이 얼마인가요?','경조금 신청 기한이 있나요?'],
+  content:`[임직원 경조금 및 경조휴가 기준] (2026.4.1~ 경조발생일 기준 적용)
+결혼(본인): 회사 500,000원 / 경조사회 1,000,000원 / 휴가 5일
+결혼(자녀): 회사 300,000원 / 경조사회 1,000,000원 / 휴가 2일
+결혼(형제·자매): 회사 100,000원
+환갑(본인·배우자 부모): 경조사회 500,000원 / 휴가 1일
+칠순: 회사 200,000원 / 경조사회 500,000원 / 휴가 1일
+팔순: 경조사회 500,000원
+자녀 출산: 과일바구니 / 휴가 20일(법정)
+자녀 백일: 경조사회 200,000원 · 자녀 돌: 경조사회 300,000원
+초상(배우자·자녀): 회사 2,000,000원 / 경조사회 1,000,000원 / 휴가 5일
+초상(본인 부모): 회사 500,000원 / 경조사회 1,000,000원 / 휴가 5일
+초상(배우자 부모): 회사 300,000원 / 경조사회 1,000,000원 / 휴가 5일
+초상(본인·배우자 조부모): 회사 200,000원 / 경조사회 500,000원 / 휴가 3일
+초상(형제·자매): 회사 200,000원 / 경조사회 500,000원 / 휴가 3일
+
+[공통]
+- 신청 기한: 회사분 3개월, 경조사회분 1년
+- flex 워크플로우 [경조사 지원 신청서] 작성 필수(지급 기본 매월 10일, 초상은 매월 10일·말일)
+- 경조사회는 입사 3개월 이후 가입하며 중도 가입·해지가 불가합니다.
+- 결혼 증빙: 청첩장 또는 혼인관계증명서, 결혼휴가는 결혼식·혼인신고일 직후 근무일 기준 사용, 축하화환은 1개월 전 사전 신청
+- 생신 증빙: 가족관계증명서, 경조휴가는 생년월일 기준 3개월 이내 사용(본인·배우자 생일은 지원 불가)
+- 초상: 화환·장례물품은 개별 연락으로 신청하며 통상 4~6시간 내 도착(19시 이후 신청은 익일 오전), 부고장 증빙 필수`}),
+K({id:'K-021', title:'경조휴가·경조사 지원·부고 신청 방법', category:'경조',
+  version:'v1.0', effective_date:'2024-08-22', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/55813',
+  keywords:['경조휴가 신청','경조사 지원 신청','부고','화환','증빙서류'],
+  faqs:['경조휴가는 어떻게 신청하나요?','부고 화환은 어떻게 신청하나요?'],
+  content:`[경조휴가 신청] flex → [휴가] → [휴가 등록] → 해당 경조휴가 선택 (증빙서류 필수)
+[경조사 지원 신청] flex → [워크플로우] → [문서 작성하기] → [복리후생] → [경조사 지원 신청]
+[부고 신청]
+1. 본인 또는 팀장이 담당자에게 개별 연락(부고장 링크, 임직원 정보, 고인과의 관계 전달)
+2. 담당자가 확인 후 부고 화환·물품을 신청하고 게시판에 안내
+3. flex 워크플로우 [경조사 지원 신청] 문서 상신
+※ 부고 화환 업체 배송 마감: 19시 (지역별 상이, 기상 악화 시 변동)`}),
+K({id:'K-022', title:'경조사회 가입·탈퇴 기준', category:'경조',
+  version:'v1.0', effective_date:'2024-08-22', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/55811',
+  keywords:['경조사회','탈퇴','중도가입'],
+  faqs:['경조사회 중간에 탈퇴할 수 있나요?'],
+  content:`경조사회는 중도 탈퇴 및 중도 가입이 불가합니다. 최초 선택한 가입 여부는 어떠한 경우에도 중도 변경할 수 없습니다.
+(가입 시점: 입사 3개월 이후)`}),
+K({id:'K-023', title:'거래처 경조비·경조화환 신청', category:'경조',
+  version:'v1.0', effective_date:'2026-04-01', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/55807',
+  keywords:['거래처 경조비','거래처 화환','전자결재'],
+  faqs:['거래처 경조비는 어떻게 신청하나요?'],
+  content:`1. 하이웍스 전자결재 [시몬스 - 거래처 경조금 지급 신청서] 기안 작성
+2. 화환 배송이 필요한 경우 기안 작성 후 인사운영팀 담당자에게 회신
+※ 참고: 거래처 경조금 지급 규정 재안내(2026.04~)`}),
+
+/* ---- 근태 ---- */
+K({id:'K-030', family:'F-ATT-GUIDE', title:'전사 근태 가이드', category:'근태',
+  version:'v2.0', effective_date:'2025-10-23', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/113614',
+  keywords:['근태 가이드','휴일수당','근태 규정'],
+  faqs:['근태 가이드 어디서 보나요?','휴일수당 기준이 궁금해요'],
+  content:`당사 근태 가이드입니다. (2025년 10월 기준)
+■ 변경사항: 휴일수당 관련 FAQ 추가
+■ 관련 공지: 토요일/이월휴무, 주휴일·공휴일/휴일대체 게시물 참고
+상세 기준표는 게시물 첨부파일을 확인해 주세요.`}),
+K({id:'K-031', family:'F-ATT-GUIDE', title:'전사 근태 가이드', category:'근태',
+  version:'v1.0', effective_date:'2024-11-04', expiry_date:'2025-10-22', is_active:false, owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/70044',
+  keywords:['근태 가이드'], faqs:[],
+  content:`2024년 11월 기준 전사 근태 가이드입니다. 현재는 2025년 10월 기준 v2.0으로 대체되었습니다.`}),
+K({id:'K-032', title:'근태 등록 방법 및 마감 기한', category:'근태',
+  version:'v1.0', effective_date:'2026-06-11', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/141361',
+  keywords:['근태 등록','근태 마감','근태 수정','flex'],
+  faqs:['근태는 어떻게 등록하나요?','근태 마감일이 언제인가요?','지난달 근태를 수정하고 싶어요'],
+  content:`근태는 flex를 통해 등록·수정할 수 있으며, 반드시 매월 말일까지 입력해야 합니다.
+해당 월 말일 이후에는 수정이 불가하며, 특이사항 발생 시 인사운영팀으로 연락해 주세요.`}),
+K({id:'K-033', title:'휴일대체 지정 기준', category:'근태',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29982',
+  keywords:['휴일대체','주휴일','공휴일','대체휴무'],
+  faqs:['휴일대체는 언제 지정할 수 있나요?','공휴일 근무하면 대체휴무 받나요?'],
+  content:`[휴일대체 지정 가능 일자]
+- 슬립마스터: 공휴일
+- 이천 본사 / 서울사무소: 주휴일(일요일), 공휴일 (+4주 이내 휴일대체 지정 가능)
+※ 토요일은 연장근무 성격이므로 휴일근무에 해당하지 않습니다.`}),
+K({id:'K-034', title:'토요일 근무 시 휴일대체 처리 방법(슬립마스터 제외)', category:'근태',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29983',
+  keywords:['토요일 근무','이월휴무','대체처리','소정근로시간'],
+  faqs:['토요일에 근무했는데 어떻게 처리하나요?'],
+  content:`[이천 본사]
+1. flex → [워크플로우] → '팩토리움 토요일 근무 휴일대체 신청서' 작성
+2. 작성일로부터 3일 이내 [휴가]의 '이월휴무' 형태로 부여
+
+[서울사무소]
+1. flex '근무'에서 토요일 근무시간 입력
+2. 당월 내 월~금 근무일 중 휴무하려는 일자에 근무시간 미입력(미출근) — 별도 대체처리 없이 당월 소정근무시간 총합을 맞춥니다.
+※ 슬립마스터는 '스케줄근무' 수립으로 자동 조정됩니다.`}),
+
+/* ---- 급여 · 보상 ---- */
+K({id:'K-040', title:'급여 지급일 및 급여 인상 시기', category:'급여·보상',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29925',
+  keywords:['급여일','급여 지급일','월급','급여 인상'],
+  faqs:['급여는 언제 들어오나요?','급여 인상은 언제 되나요?'],
+  content:`급여는 매월 10일에 지급됩니다. 급여지급일이 주말인 경우 직전 금요일에, 공휴일인 경우 직전 마지막 영업일에 지급합니다.
+급여 인상은 평가 대상자에 한해 매년 12월 1일 진행됩니다.`}),
+K({id:'K-041', title:'급여 명세서 조회 방법', category:'급여·보상',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29924',
+  keywords:['급여명세서','명세서 조회'],
+  faqs:['급여명세서는 어디서 보나요?'],
+  content:`flex 접속 → 좌측 [내 프로필] → [급여] → 월별 급여명세서 조회`}),
+K({id:'K-042', title:'급여 계좌 변경 방법', category:'급여·보상',
+  version:'v1.0', effective_date:'2026-07-20', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/145838',
+  keywords:['급여계좌','계좌 변경','통장사본'],
+  faqs:['급여 계좌를 바꾸고 싶어요'],
+  content:`1. flex(https://flex.team) 접속
+2. 내 프로필 → 문서·증명서 → 급여계좌사본 → 통장사본 첨부
+3. 내 프로필 → 기본정보 → 급여계좌 → 변경할 계좌 정보 입력 (본인 인증 필수)`}),
+K({id:'K-043', is_demo:true, title:'[데모] 성과급(인센티브) 운영기준', category:'급여·보상',
+  version:'v1.0', effective_date:'2026-01-01', owner:'인사기획팀', source_url:'',
+  keywords:['성과급','인센티브','상여','지급률'],
+  faqs:['성과급은 언제 지급되나요?'],
+  content:`※ 이 문서는 게시판 원문이 없어 데모용으로 작성된 가상 기준입니다. 실제 기준은 인사기획팀 확인이 필요합니다.
+지급 시기: 매년 1분기 / 대상: 전년도 평가 대상자 중 지급일 기준 재직자
+지급률: 회사 성과 및 개인 평가 등급에 따라 차등 적용`}),
+
+/* ---- 평가 · 승진 ---- */
+K({id:'K-050', title:'FLEX 수습평가 프로세스', category:'평가·승진',
+  version:'v1.0', effective_date:'2024-04-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/41652',
+  keywords:['수습평가','원온원','신규입사자','수습 통과','평가'],
+  faqs:['수습평가는 어떻게 진행되나요?','수습 결과는 어떻게 알 수 있나요?'],
+  content:`[프로세스(입사일 기준)]
+1차 직책자 원온원 Review(D+30일) → 중간 본인 수습평가(D+60일) → 2차 직책자 원온원 Review(D+60일) → 최종 본인 수습평가(D+90일) → 직책자 최종 수습평가(D+90일)
+
+[원온원 리뷰 1·2차] 직책자만 작성. flex [워크플로우] → [원온원 리뷰], 결재라인 2차 조직장까지
+[본인 수습평가]
+- 슬립마스터: [수습평가서(본인평가)_슬립마스터용], 1차 파트장 / 2차 팀장(직접 설정)
+- 기타 직군: [수습평가서(본인평가)_일반직무], 결재라인 자동 설정
+[직책자 최종 수습평가] D+90일, [최종 수습평가서(직책자용)] 작성. 파트장 평가 시 팀장 전결, 팀장 이상 평가 시 본인 전결
+※ 수습 결과: 통과 시 flex [홈피드]-[피드백]으로 안내, 연장 시 하이웍스 메일로 별도 안내`}),
+K({id:'K-051', is_demo:true, title:'[데모] 승진 운영기준', category:'평가·승진',
+  version:'v1.0', effective_date:'2026-01-01', owner:'인사기획팀', source_url:'',
+  keywords:['승진','승격','직급','승진 심사'],
+  faqs:['승진 기준이 궁금해요'],
+  content:`※ 이 문서는 게시판 원문이 없어 데모용으로 작성된 가상 기준입니다. 실제 기준은 인사기획팀 확인이 필요합니다.
+심사 시기: 매년 12월 / 대상: 직급별 표준 체류연한 충족자
+심사 요소: 평가 등급 이력, 직무 역량, 조직 기여도
+※ 휴직 기간의 체류연한 산입 여부 등 개별 사안은 인사기획팀 문의가 필요합니다.`}),
+
+/* ---- 채용 ---- */
+K({id:'K-060', title:'사내 추천 제도 및 추천 장려금', category:'채용',
+  version:'v1.0', effective_date:'2026-04-22', owner:'채용팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/135710',
+  keywords:['사내추천','추천 장려금','채용','포상금','리퍼럴'],
+  faqs:['사내 추천은 어떻게 하나요?','추천 장려금은 얼마인가요?'],
+  content:`현재 채용 중인 직무에 한해 사내 추천이 가능하며, 채용 중인 직무는 시몬스 채용 홈페이지에서 확인할 수 있습니다.
+
+[프로세스]
+1. 오픈 포지션 확인(시몬스 채용 홈페이지)
+2. 사내추천 공고에 이력서 접수
+3. flex 워크플로우 [사내추천 신청서] 작성
+4. 최종 합격 후 하이웍스 전자결재 [직원추천서] 상신
+5. 추천 포상금 지급 — 피추천인 3개월 근속 및 수습 통과 시 지급
+
+[추천 장려금] 직책자 500만원 / 비직책자 250만원
+※ 추천인·피추천인 퇴직 예정 시 제외, 임원은 지급 대상 제외
+문의: 채용팀`}),
+
+/* ---- 복리후생 ---- */
+K({id:'K-070', family:'F-WELFARE-POINT', title:'복지포인트 지급 기준(2026년)', category:'복리후생',
+  version:'v2.0', effective_date:'2026-02-26', owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/128744',
+  keywords:['복지포인트','네이버페이','식권대장','포인트 전환'],
+  faqs:['복지포인트는 언제 받나요?','복지포인트는 어디에 쓸 수 있나요?','복지포인트 전환 기한이 언제인가요?'],
+  content:`[2026년 복지포인트]
+지급 대상: 2025년까지 입사자 중 2026.2.28 기준 재직자 (임원, 2026년 입사자 제외)
+지급 금액: 300,000 포인트
+지급 일자: 2026.2.27(금) 오전 10시
+사용 방법: 식권대장 앱 로그인(ID: 본인 휴대폰번호 / 초기 PW: 0000) → 네이버페이 포인트로 전환
+※ 2026.3.31까지 미전환 시 소멸됩니다.`}),
+K({id:'K-071', family:'F-WELFARE-POINT', title:'복지포인트 지급 기준(일반 안내)', category:'복리후생',
+  version:'v1.0', effective_date:'2024-08-22', expiry_date:'2026-02-25', is_active:false, owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/55809',
+  keywords:['복지포인트'], faqs:[],
+  content:`지원 대상: 전년도 재직 임직원 / 지원 금액: 네이버페이 300,000 포인트 / 지급 일정: 매년 1/4분기
+주의: 지급 연도 입사자 제외, 전환 기간 내 미전환 시 소멸
+※ 2026년 기준은 v2.0 문서를 확인하세요.`}),
+K({id:'K-072', family:'F-INSURANCE', title:'단체상해보험 신청 및 보장 안내', category:'복리후생',
+  version:'v2.0', effective_date:'2025-11-12', owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/116343',
+  keywords:['단체상해보험','보험','한화손해보험','보험금 청구','후유장해'],
+  faqs:['단체상해보험은 어떻게 신청하나요?','보험사가 어디인가요?'],
+  content:`대상: 전 직원(입사 1개월 이후 인사팀에서 가입)
+신청: flex → [워크플로우] → [문서 작성하기] → [단체상해보험 신청] / 보험사 청구서 작성 및 필요서류 제출
+보장 예시
+- 상해 후유장해: 골절 내고정 삽입·제거, 관절 운동범위 비정상, 척추 신경장해, 얼굴 흉터(5cm 이상), 절단, 뇌손상 치매(CDR 2점 이상) 등
+- 질병 80% 이상 고도 후유장해: 당뇨로 인한 실명·청력상실·사지절단, 급성 심부전으로 인한 심장이식, 노령 치매(CDR 4점 이상)
+※ 2025년 10월부터 운영업체가 캐롯손해보험에서 한화손해보험으로 인수·합병되어 보험사명이 변경되었습니다.`}),
+K({id:'K-073', family:'F-INSURANCE', title:'단체상해보험 신청 안내', category:'복리후생',
+  version:'v1.0', effective_date:'2023-12-14', expiry_date:'2025-11-11', is_active:false, owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/23838',
+  keywords:['단체상해보험','캐롯손해보험'], faqs:[],
+  content:`캐롯손해보험 기준 단체상해보험 안내입니다. 2025년 10월 한화손해보험으로 운영사가 변경되어 종료된 문서입니다.`}),
+K({id:'K-074', title:'임직원 직원구매(할인) 신청', category:'복리후생',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29934',
+  keywords:['직원구매','임직원 할인','자사 제품','패밀리세일'],
+  faqs:['직원구매는 어떻게 신청하나요?','직원 할인 대상이 되나요?'],
+  content:`대상: 전 직원(3개월 이상 근무자)
+신청: 하이웍스 → 전자결재 → 인사부 양식 → 직원구매 신청
+주의사항
+- 직원구매 할인율 등은 업무상 대외비로 외부 유출이 불가하며, 위반 시 당사 규정에 따라 처벌될 수 있습니다.
+- 직원구매 제품은 재판매 및 양도가 불가합니다.
+- 한도 확인이 필요한 경우 인사부 담당자에게 문의해 주세요.`}),
+K({id:'K-075', title:'시몬스 제휴 호텔 이용 안내(Partner Hotels)', category:'복리후생',
+  version:'v1.0', effective_date:'2026-02-09', owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/127046',
+  keywords:['제휴 호텔','숙박 할인','신라스테이','조선팰리스'],
+  faqs:['제휴 호텔은 어디가 있나요?','호텔 할인 어떻게 받나요?'],
+  content:`서울: 조선팰리스 서울 강남(~2026.12.31), 신라스테이 구로·마포·강남권·광화문·서대문
+충청: 신라스테이 천안 / 강원: 신라모노그램 강릉(~2026.08.31), 홈 마리나 속초(~2026.09.30)
+경상: 신라스테이 해운대, 호텔 농심 부산, 라마다 앙코르 해운대, 아스티 부산
+해외: 신라모노그램 다낭(~2026.07.31)
+※ 호텔 방문 시 사원증 또는 명함 제출이 필요합니다. 제휴 호텔 정보는 지속 업데이트됩니다.
+문의: 인사운영팀`}),
+K({id:'K-076', title:'명절선물 지급 기준', category:'복리후생',
+  version:'v1.0', effective_date:'2026-01-27', owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/125418',
+  keywords:['명절선물','상품권','설','추석'],
+  faqs:['휴직 중인데 명절선물 받나요?','명절선물은 언제 받나요?'],
+  content:`지급 대상: 명절이 포함된 월의 1일 기준 재직·휴직 구성원 (명절 당일 퇴직 예정자 제외)
+신청: 부서장을 통해 취합, 부서별 취합 양식 작성 후 제출
+유의사항: 상품권은 현물 지급, 정관장·한우 혼합세트는 수령 주소·연락처 필수 기재
+배송: 신청 마감 후 순차 배송
+문의: 인사운영팀`}),
+K({id:'K-077', title:'제휴 할인(이천시 상생 파트너십·항공·카쉐어링·레스토랑)', category:'복리후생',
+  version:'v1.0', effective_date:'2026-01-23', owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/125030',
+  keywords:['제휴 할인','이천시','롯데프리미엄아울렛','테르메덴','에덴파라다이스','항공','쏘카','레스토랑'],
+  faqs:['임직원 제휴 할인은 어떤 게 있나요?'],
+  content:`[이천시 상생 파트너십] 롯데프리미엄아울렛 이천점, 에덴파라다이스, 테르메덴 — 각 업체 담당자에게 예약·문의
+[항공] 진에어·제주항공·에어부산 — 임직원 및 가족 대상, 항공사별 매뉴얼·할인코드 참고
+[카쉐어링] 쏘카(SOCAR) 기업 제휴
+[레스토랑] 서울·광교 임직원 할인 프로모션(기간별 운영)
+※ 프로모션은 기간 한정으로 운영되며 최신 조건은 복리후생 게시판을 확인해 주세요.`}),
+K({id:'K-078', family:'F-SEJONG', title:'세종사이버대학교 위탁교육(2026년 가을학기)', category:'복리후생',
+  version:'v3.0', effective_date:'2026-05-26', owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/139414',
+  keywords:['세종사이버대학교','위탁교육','학비 지원','학위'],
+  faqs:['사이버대학 학비 지원되나요?','위탁교육 신청은 언제인가요?'],
+  content:`세종사이버대학교 위탁교육 2026년 가을학기 모집 안내입니다.
+상세 모집 요강·지원 조건은 게시물 첨부 이미지를 확인해 주세요.
+※ 봄학기/가을학기로 매 학기 별도 공지되며, 직전 학기 공지는 종료 처리됩니다.
+문의: 인사운영팀`}),
+K({id:'K-079', family:'F-SEJONG', title:'세종사이버대학교 위탁교육(2026년 봄학기)', category:'복리후생',
+  version:'v2.0', effective_date:'2025-11-18', expiry_date:'2026-05-25', is_active:false, owner:'인사운영팀', board:'복리후생',
+  source_url:'https://boards.office.hiworks.com/board/postview/2369/117929',
+  keywords:['세종사이버대학교','위탁교육'], faqs:[],
+  content:`2026년 봄학기 모집이 종료되었습니다. 최신 학기 공지를 확인해 주세요.`}),
+
+/* ---- 증명 · 문서 ---- */
+K({id:'K-080', title:'재직증명서·경력증명서 발급', category:'증명·문서',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29912',
+  keywords:['재직증명서','경력증명서','제증명'],
+  faqs:['재직증명서 어떻게 떼나요?'],
+  content:`flex 접속 → 좌측 [내 프로필] → [문서·증명서] → 우측 [증명서 발급]`}),
+K({id:'K-081', title:'원천징수영수증·원천징수부 발급', category:'증명·문서',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29914',
+  keywords:['원천징수영수증','원천징수부','연말정산'],
+  faqs:['원천징수영수증은 어디서 발급하나요?'],
+  content:`flex 접속 → [내 프로필] → [급여] → [원천징수 발급]
+참고
+1) 발급 요청 상신 후 해당 플랫폼에서 바로 인쇄할 수 있습니다.
+2) flex에서는 2024년 자료부터 발급 가능하며, 2023년 이전 자료는 인사운영팀에 요청해 주세요.`}),
+K({id:'K-082', title:'근로계약서 조회', category:'증명·문서',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29917',
+  keywords:['근로계약서','전자계약'],
+  faqs:['근로계약서를 확인하고 싶어요'],
+  content:`전자계약 구성원(2023.07~, flex 도입 이후): flex → [내 프로필] → [계약서]에서 확인
+기존 구성원(~2023.06): 개인별 1부 지류 배부 완료, 필요 시 인사팀에 문의`}),
+K({id:'K-083', title:'개인정보(연락처·주소·개명) 변경', category:'증명·문서',
+  version:'v1.0', effective_date:'2024-01-30', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/29931',
+  keywords:['개인정보 변경','연락처','주소','개명'],
+  faqs:['연락처를 바꾸고 싶어요','개명했는데 어떻게 하나요?'],
+  content:`연락처·주소: flex → 좌측 [내 프로필] → 기본정보 변경
+개명: 인사팀 근태 담당자에게 기본증명서(개명 증빙서류)와 주민등록등본 제출`}),
+K({id:'K-084', family:'F-OWNER', title:"HR 업무별 담당자 안내", category:'증명·문서',
+  version:'v3.0', effective_date:'2026-03-16', owner:'인사부',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/130869',
+  keywords:['담당자','문의처','인사기획팀','인사운영팀','채용팀','인재개발팀','HRBP'],
+  faqs:['이 건은 누구에게 문의하나요?','급여 담당자가 누구인가요?'],
+  content:`[HR 주요 문의사항 및 담당 부서] (2026년 7월 기준)
+인사제도(평가·보상·승진·조직문화), 사내규정/노무관리 — 인사기획팀
+HR 시스템(flex), 평가(역량·KPI·수습평가) — 인사운영팀
+인력운영·근태·휴직·복직·퇴직(서울사무소/팩토리움, 슬립마스터/N32크루) — 인사운영팀
+급여·근태·4대보험·퇴직금·제증명 발급 — 인사운영팀
+직원/거래처 경조사, 직원구매, 패밀리세일 — 인사운영팀
+채용(슬립마스터·N32크루/팩토리움), 채용 제도 — 채용팀
+온보딩, 리더십 교육·워크숍, IDP, 임직원 리텐션, 직무역량 강화, 구독 서비스(EAP), 법정필수교육 — 인재개발팀
+팩토리움 HR 전반 — HRBP팀`}),
+K({id:'K-085', family:'F-OWNER', title:"HR 업무별 담당자 안내", category:'증명·문서',
+  version:'v2.0', effective_date:'2025-09-11', expiry_date:'2026-03-15', is_active:false, owner:'인사부',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/109230',
+  keywords:['담당자'], faqs:[],
+  content:`2025년 9월 기준 담당자 안내입니다. 현재는 2026년 기준 v3.0으로 대체되었습니다.`}),
+
+/* ---- 퇴직 ---- */
+K({id:'K-090', title:'퇴직 프로세스', category:'퇴직',
+  version:'v1.0', effective_date:'2024-01-31', owner:'인사운영팀',
+  source_url:'https://boards.office.hiworks.com/board/postview/2456/30162',
+  keywords:['퇴직','퇴사','사직서','퇴사자점검사항','잔여휴가','퇴직금'],
+  faqs:['퇴사 절차가 어떻게 되나요?','퇴사할 때 남은 연차는 어떻게 하나요?','사직서는 어디에 쓰나요?'],
+  content:`[퇴직 내용 전달]
+1. flex에서 조회되는 잔여 휴가에 대해 사용 여부를 결정합니다(전체 또는 일부 소진 가능).
+2. 조직장을 통해 인사팀으로 퇴직일자를 메일 접수합니다. (양식은 없으나 마지막 출근일과 실퇴직일을 반드시 기재)
+3. 퇴직 구성원 본인에게 인사운영팀이 별도 안내합니다.
+
+[문서 작성]
+flex → [워크플로우] → [문서 작성하기] → [퇴사자작성양식] → '사직서'와 '퇴사자점검사항' 2개 양식 모두 작성 필수
+※ 퇴사 후 마지막 급여지급일에 마지막 귀속월 급여명세서와 퇴직 당해연도 근로소득 원천징수영수증을 개인 메일로 발송하므로, '퇴사자점검사항' 작성 시 개인 메일 주소를 반드시 입력해 주세요.
+※ 반드시 인사운영팀 담당자에게 내용을 먼저 전달한 뒤 작성합니다.
+※ 연차는 퇴사 시 '입사일' 기준으로 재산정됩니다.(취업규칙 제20조 4항)`}),
+
+/* ---- 교육 ---- */
+K({id:'K-100', family:'F-LEGAL-EDU', title:'법정의무 교육(온라인) 수강 안내', category:'교육',
+  version:'v2.0', effective_date:'2025-10-28', owner:'인재개발팀', board:'교육',
+  source_url:'https://boards.office.hiworks.com/board/postview/3136/114179',
+  keywords:['법정의무교육','온라인 교육','휴넷','수료'],
+  faqs:['법정의무교육은 언제 들어야 하나요?','법정교육 어디서 수강하나요?','교육을 못 들었는데 어떻게 하나요?'],
+  content:`법정의무 교육은 모든 구성원이 연 1회 이상 반드시 이수해야 하며, 수료율 100% 달성이 필요합니다.
+[교육 일정]
+- 정기교육: 11월 3일(월)~30일(일), 전 임직원 대상
+- 추가교육: 12월 1일(월)~19일(금), 미수료자 및 10/28 이후 신규 입사자·복직자 대상
+[접속 방법] 하이웍스 → 법정의무 교육(휴넷) → 나의 강의실 → 온라인교육 학습현황 → 학습하기
+문의: 인재개발팀`}),
+K({id:'K-101', family:'F-LEGAL-EDU', title:'법정의무 교육(온라인) 수강 안내', category:'교육',
+  version:'v1.0', effective_date:'2024-10-31', expiry_date:'2025-10-27', is_active:false, owner:'인재개발팀', board:'교육',
+  source_url:'https://boards.office.hiworks.com/board/postview/3136/69894',
+  keywords:['법정의무교육'], faqs:[],
+  content:`2024년 법정의무 교육(11/4~12/1) 안내입니다. 현재는 2025년 기준 v2.0으로 대체되었습니다.`}),
+K({id:'K-102', family:'F-EXT-EDU', title:'외부교육 신청 매뉴얼', category:'교육',
+  version:'v3.0', effective_date:'2026-03-10', owner:'인재개발팀', board:'교육',
+  source_url:'https://boards.office.hiworks.com/board/postview/3136/130222',
+  keywords:['외부교육','교육 신청','교육비 지원'],
+  faqs:['외부교육은 어떻게 신청하나요?','교육비 지원을 받고 싶어요'],
+  content:`외부교육 신청 매뉴얼입니다. (2026년 3월 기준)
+신청 절차와 결재라인은 게시물 첨부 매뉴얼을 참고해 주세요.
+문의: 인재개발팀`}),
+K({id:'K-103', family:'F-EXT-EDU', title:'외부교육 신청 매뉴얼', category:'교육',
+  version:'v2.0', effective_date:'2026-01-01', expiry_date:'2026-03-09', is_active:false, owner:'인재개발팀', board:'교육',
+  source_url:'https://boards.office.hiworks.com/board/postview/3136/123298',
+  keywords:['외부교육'], faqs:[],
+  content:`2026년 1월 기준 외부교육 신청 매뉴얼입니다. v3.0으로 대체되었습니다.`}),
+K({id:'K-104', title:'구독 서비스(롱블랙·윌라·퍼블리) 신청', category:'교육',
+  version:'v1.0', effective_date:'2024-03-15', owner:'인재개발팀', board:'교육',
+  source_url:'https://boards.office.hiworks.com/board/postview/3136/35407',
+  keywords:['구독 서비스','롱블랙','윌라','퍼블리','자기계발'],
+  faqs:['구독 서비스 신청은 언제 하나요?'],
+  content:`분기별로 구독 서비스(롱블랙·윌라·퍼블리) 신청을 받습니다. 신청 기간과 방법은 분기 공지를 확인해 주세요.
+문의: 인재개발팀`}),
+K({id:'K-105', title:'리더십 수업 및 Change Agent 운영', category:'교육',
+  version:'v1.0', effective_date:'2025-10-23', owner:'인재개발팀', board:'교육',
+  source_url:'https://boards.office.hiworks.com/board/postview/3136/113595',
+  keywords:['리더십 수업','Change Agent','조직문화','1page summary'],
+  faqs:['리더십 교육은 누가 대상인가요?','Change Agent가 뭔가요?'],
+  content:`[SIMMONS 리더십 수업] 분기별 운영, 직책자 대상. 분기별 주제와 1page summary가 교육 게시판에 공유됩니다.
+[SIMMONS Change Agent(CA)] 조직문화 변화 활동을 주도하는 구성원 프로그램으로, 활동 결과를 주기적으로 공유합니다.
+문의: 인재개발팀`}),
 ];
-function find(q){
-  const t=q.replace(/\s/g,"").toLowerCase();
-  let best=null,len=0;
-  for(const e of KB) for(const k of e.k){
-    const kk=k.replace(/\s/g,"");
-    if(t.includes(kk)&&kk.length>len){best=e;len=kk.length}
-  }
-  return best;
-}
-const EGG=/정지훈/;
 
-/* ========== 노션 렌더 ========== */
-function renderPage(id,anchor){
-  const p=PAGES[id];
-  document.getElementById("nCrumb").innerHTML=p.crumb.map(c=>"<span>"+c+"</span>").join("<span>/</span>");
-  let h='<span class="nicon">'+p.em+'</span><h1 class="nh1">'+p.title+'</h1><div class="ncall"><span>💡</span><div>'+p.call+'</div></div>';
-  p.blocks.forEach((b,i)=>{h+=b.h?'<h2 class="nh2" id="b'+i+'">'+b.h+'</h2>':'<p class="np" id="b'+i+'">'+b.p+'</p>'});
-  document.getElementById("nBody").innerHTML=h;
-  document.querySelectorAll(".nitem[data-page]").forEach(n=>n.classList.toggle("on",n.dataset.page===id));
-  if(typeof anchor==="number"){
-    const el=document.getElementById("b"+anchor);
-    if(el){document.querySelectorAll(".np.hl").forEach(x=>x.classList.remove("hl"));
-      el.classList.add("hl");if(el.scrollIntoView)el.scrollIntoView({block:"center",behavior:"smooth"})}
-  }
-}
+/* =========================================================================
+ * 2. STORE  (로컬 영속 계층)
+ *    TODO: 실제 서비스 시 fetch('/api/...') 기반 서버 저장소로 교체.
+ *          아래 Store.api.* 시그니처를 그대로 유지하면 UI 변경 없이 전환 가능.
+ * ========================================================================= */
+const LS_KEY = 'simmons-hr-assistant/v1';
+const uid = (p) => p + '-' + Math.random().toString(36).slice(2, 9);
+const iso = (d) => d.toISOString().slice(0, 10);
+const daysAgo = (n) => { const d = new Date(TODAY); d.setDate(d.getDate() - n); return d; };
 
-/* ========== 대화 ========== */
-const chat=document.getElementById("chat");
-function esc(s){return s.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))}
-function bubble(who,html,o){
-  o=o||{};
-  const m=document.createElement("div");m.className="msg "+who;
-  m.innerHTML='<div class="bx">'+html+'</div>';
-  const bx=m.querySelector(".bx");
-  if(o.page){
-    const g=document.createElement("div");g.className="guide";
-    g.textContent=o.guide||"관련된 페이지를 안내드릴게요.";
-    bx.appendChild(g);
-    const c=document.createElement("button");c.className="pcard";
-    c.innerHTML='<span class="pe">'+PAGES[o.page].em+'</span><span class="pt"><b>HR 가이드 / '+PN[o.page]+'</b><small>'+esc(o.sub||"")+' 문단</small></span><span class="ar">→</span>';
-    c.onclick=()=>{renderPage(o.page,o.n);toast("노션 문서의 해당 문단으로 이동했습니다")};
-    bx.appendChild(c);
-  }
-  if(o.egg){
-    const g=document.createElement("div");g.className="guide";g.textContent=o.egg;
-    bx.appendChild(g);
-    const c=document.createElement("button");c.className="pcard lock";
-    c.innerHTML='<span class="pe">🔒</span><span class="pt"><b>인사부문 내부 / 정지훈</b><small>열람 권한 없음</small></span><span class="ar">→</span>';
-    c.onclick=()=>toast("이 문서는 인사부문 내부 전용입니다");
-    bx.appendChild(c);
-  }
-  if(o.kw&&o.kw.length){
-    const w=document.createElement("div");w.className="kwrap";
-    const l=document.createElement("div");l.className="kl";
-    l.textContent=o.kwLine||"더 궁금한 게 있으면 말씀 주세요.";
-    w.appendChild(l);
-    const r=document.createElement("div");r.className="kws";
-    o.kw.forEach(k=>{const b=document.createElement("button");b.className="kw";
-      b.innerHTML='<i>#</i>'+esc(k);b.onclick=()=>send(k);r.appendChild(b)});
-    w.appendChild(r);bx.appendChild(w);
-  }
-  chat.appendChild(m);chat.scrollTop=chat.scrollHeight;return m;
-}
-function typing(){
-  const m=document.createElement("div");m.className="msg bot";
-  m.innerHTML='<div class="bx" style="padding:0"><div class="typing"><i></i><i></i><i></i></div></div>';
-  chat.appendChild(m);chat.scrollTop=chat.scrollHeight;return m;
-}
-function send(q){
-  if(!q||!q.trim())return;
-  bubble("usr",esc(q));
-  const t=typing();
-  setTimeout(()=>{
-    t.remove();
-    if(EGG.test(q.replace(/\s/g,""))){
-      bubble("bot","정지훈님에 대해 알려드릴게요.<br><br>"+
-        "<b>인사시스템 기준</b><br>미혼 (만 38~39세 추정)"+
-        "<div class=\"eggnote\">사내 비공식 관측 기록</div>"+
-        "<ul class=\"egglist\">"+
-        "<li>화요일 분리수거로 진짜 집에 일찍 감</li>"+
-        "<li>사내 연애 중</li>"+
-        "<li>8월 말 웨딩촬영 함</li>"+
-        "<li>최근 프로포즈 진행</li>"+
-        "</ul>",
-        {egg:"인사시스템은 아직 미혼으로 알고 있습니다. 곧 갱신될 예정입니다."});
-      return;
+const CATEGORIES = ['휴가·연차','휴직·모성보호','경조','근태','급여·보상','평가·승진','복리후생','증명·문서','퇴직','채용','교육'];
+
+/* 데모 누적 로그 — 대시보드가 빈 화면으로 시작하지 않도록 30일치 시드 생성 */
+const SEED_Q = [
+  ['연차는 언제 발생하나요?','휴가·연차','K-001',58,.96,.04],
+  ['경조휴가 기준이 궁금해요','경조','K-020',47,.94,.05],
+  ['육아휴직은 얼마나 쓸 수 있나요?','휴직·모성보호','K-010',44,.93,.07],
+  ['복지포인트는 언제 받나요?','복리후생','K-070',39,.97,.03],
+  ['퇴사하면 남은 연차는 어떻게 되나요?','퇴직','K-090',34,.88,.12],
+  ['급여는 언제 들어오나요?','급여·보상','K-040',31,.99,.01],
+  ['재직증명서 어떻게 떼나요?','증명·문서','K-080',29,.99,.01],
+  ['근태 마감일이 언제인가요?','근태','K-032',27,.96,.04],
+  ['직원구매는 어떻게 신청하나요?','복리후생','K-074',24,.95,.05],
+  ['법정의무교육은 언제 들어야 하나요?','교육','K-100',22,.97,.03],
+  ['단체상해보험은 어떻게 신청하나요?','복리후생','K-072',19,.94,.06],
+  ['출산휴가는 며칠인가요?','휴직·모성보호','K-012',18,.95,.05],
+  ['수습평가는 어떻게 진행되나요?','평가·승진','K-050',16,.9,.1],
+  ['사내 추천 장려금은 얼마인가요?','채용','K-060',14,.96,.04],
+  ['제휴 호텔은 어디가 있나요?','복리후생','K-075',12,.98,.02]
+];
+/* 답변하지 못한 질문(Knowledge Gap 시드) */
+const SEED_GAP = [
+  ['휴직자도 평가를 받나요?','평가·승진',14],
+  ['휴직 중 대체인력은 어떻게 운영되나요?','휴직·모성보호',12],
+  ['복직하면 연차는 몇 개 생기나요?','휴가·연차',11],
+  ['육아휴직 중에 승진할 수 있나요?','평가·승진',10],
+  ['성과급 지급률은 어떻게 정해지나요?','급여·보상',9],
+  ['사내 동호회 지원 제도가 있나요?','복리후생',8],
+  ['퇴직금은 언제 지급되나요?','퇴직',8]
+];
+/* HR 이관 문의 시드 */
+const SEED_INQ = [
+  ['평가/승진','휴직자 평가 기준이 따로 있는지 궁금합니다. 육아휴직 중 평가 대상에 포함되나요?'],
+  ['근태/휴가','복직 후 연차 일수가 예상과 다르게 표시됩니다. 확인 부탁드립니다.'],
+  ['복리후생','타 지역 발령 시 이사 지원이 있는지 문의드립니다.'],
+  ['급여/보상','성과급 지급률 산정 방식이 궁금합니다.'],
+  ['휴직/복직','배우자 출산휴가와 육아휴직을 연달아 사용할 수 있나요?'],
+  ['증명/서류','2023년 원천징수영수증이 필요한데 flex에서 조회되지 않습니다.'],
+  ['교육','외부교육 수강 후 교육비 정산 절차를 알고 싶습니다.'],
+  ['기타','사내 동호회 운영 지원 제도가 있는지 확인 부탁드립니다.']
+];
+const QMUL = 2.7;
+
+function buildSeed() {
+  const questions = [], feedback = [], inquiries = [];
+  let n = 0;
+  SEED_Q.forEach(([q, cat, kid, cnt, pos, neg]) => {
+    const total = Math.round(cnt * QMUL);
+    for (let i = 0; i < total; i++) {
+      const d = daysAgo(Math.floor(Math.random() * 30));
+      const id = 'Q-S' + (++n);
+      questions.push({ id, text: q, category: cat, answered: true, knowledgeId: kid, status: 'answered',
+        userId: 'U-' + (100 + (n % 180)), createdAt: iso(d), seeded: true });
+      const r = Math.random();
+      if (r < pos) feedback.push({ id: uid('F'), questionId: id, questionText: q, type: 'up', reason: null, createdAt: iso(d), seeded: true });
+      else if (r < pos + neg + .06) feedback.push({ id: uid('F'), questionId: id, questionText: q, type: 'down',
+        reason: ['규정과 다른 것 같아요','최신 기준이 아닌 것 같아요','질문 의도와 다른 답변이에요','내용이 부족해요'][Math.floor(Math.random() * 4)],
+        createdAt: iso(d), seeded: true });
     }
-    const e=find(q);
-    if(e){
-      bubble("bot",e.a,{page:e.p,n:e.n,sub:e.sub,kw:e.kw,
-        guide:e.sys?"개인 정보는 인사시스템에서 가져왔고, 규정은 이 페이지에 있어요.":"관련된 페이지를 안내드릴게요."});
-    }else{
-      bubble("bot","그 내용은 아직 노션 문서에 없어서 안내드릴 페이지가 없습니다. 지어내지 않고 <b>인사부문에 그대로 전달</b>했어요.");
-      addMiss(q);
+  });
+  SEED_GAP.forEach(([q, cat, cnt]) => {
+    for (let i = 0; i < cnt; i++) {
+      const d = daysAgo(Math.floor(Math.random() * 30));
+      questions.push({ id: 'Q-G' + (++n), text: q, category: cat, answered: false, knowledgeId: null,
+        status: 'unanswered', userId: 'U-' + (100 + (n % 180)), createdAt: iso(d), seeded: true });
     }
-  },620+Math.random()*380);
-}
-document.getElementById("form").onsubmit=e=>{
-  e.preventDefault();const i=document.getElementById("inp");const v=i.value;i.value="";send(v);
-};
-
-/* ========== 위젯 ========== */
-const widget=document.getElementById("widget"),launcher=document.getElementById("launcher");
-document.getElementById("wClose").onclick=()=>{widget.classList.add("hide");launcher.classList.add("show")};
-launcher.onclick=()=>{widget.classList.remove("hide");launcher.classList.remove("show")};
-document.querySelectorAll(".nitem[data-page]").forEach(n=>n.onclick=()=>renderPage(n.dataset.page));
-document.getElementById("navRoot").onclick=()=>renderPage("attend");
-
-/* ========== 관리자 ========== */
-const state={
- rows:[{q:"육아휴직 복직하면 연차는 어떻게 돼?",n:14,s:"new",p:"HR 가이드 / 근태 · 연차",
-        d:"육아휴직 기간은 출근한 것으로 보아 근속기간에 포함합니다. 다만 복직 시점에 따라 부여 일수가 달라져 인사부문 확인이 필요합니다."},
-       {q:"퇴직연금 운용사 바꾸려면?",n:11,s:"new",p:"HR 가이드 / 급여 · 정산",
-        d:"퇴직연금 DC형 운용사 변경은 연 2회, 3월과 9월에 신청할 수 있습니다. 신청서는 그룹웨어 서식함에 있습니다."},
-       {q:"동호회 지원금은 얼마야?",n:6,s:"new",p:"HR 가이드 / 복리후생",
-        d:"동호회 지원금은 분기별로 인원수에 따라 지급하며, 활동 사진과 영수증을 첨부해 신청합니다."},
-       {q:"출장 숙박비 한도는?",n:5,s:"new",p:"HR 가이드 / 근무 형태",
-        d:"국내 출장 숙박비는 1박 12만 원, 해외는 지역 등급별 기준표를 적용합니다."},
-       {q:"반차 쓴 날 야근하면 수당은?",n:9,s:"ok",p:"HR 가이드 / 근태 · 연차",
-        d:"반차 사용일에 연장근로가 발생하면 실근로시간이 8시간을 넘는 부분에 대해 연장수당을 지급합니다."}],
- kw:[{n:"연차",tags:["연차","이월","소멸","남은 휴가","월차"],src:"근태 · 연차"},
-     {n:"반차",tags:["반차","반반차","조퇴"],src:"근태 · 연차"},
-     {n:"건강검진",tags:["건강검진","검진","종합검진","병원"],src:"복리후생"},
-     {n:"경조",tags:["경조사비","축의금","조의금","부고"],src:"복리후생"},
-     {n:"증명서",tags:["재직증명","경력증명","원천징수","영문"],src:"증명서 발급"},
-     {n:"재택",tags:["재택","원격근무","유연근무","코어타임"],src:"근무 형태"},
-     {n:"급여",tags:["급여일","월급날","식대","연말정산"],src:"급여 · 정산"}]
-};
-const PS={new:["안내 못함","p-new","노션에 추가"],wait:["반영 대기","p-wait","확인하기"],ok:["안내 중","p-ok","문단 보기"]};
-function addMiss(q){
-  const r=state.rows.find(m=>m.q===q);
-  if(r)r.n++;else state.rows.unshift({q:q,n:1,s:"new",p:"HR 가이드 / 근태 · 연차",d:""});
-  renderTable();toast("안내할 페이지가 없는 질문입니다 → 관리자 화면에 쌓임");
-}
-function renderTable(){
-  const T=document.getElementById("aTable");T.innerHTML="";
-  state.rows.forEach(r=>{
-    const tr=document.createElement("tr");tr.dataset.q=r.q;
-    const p=PS[r.s];
-    tr.innerHTML='<td>'+esc(r.q)+'</td><td>'+r.n+'회</td><td><span class="pill '+p[1]+'">'+p[0]+'</span></td>';
-    const td=document.createElement("td");const b=document.createElement("button");
-    b.className="lnk";b.textContent=p[2];b.onclick=()=>openDrawer(r);
-    td.appendChild(b);tr.appendChild(td);T.appendChild(tr);
   });
-  document.getElementById("aMiss").textContent=state.rows.filter(r=>r.s==="new").length;
-}
-function renderKw(){
-  const L=document.getElementById("kwList");L.innerHTML="";
-  state.kw.forEach(k=>{
-    const d=document.createElement("div");d.className="krow";
-    d.innerHTML='<span class="kn">'+k.n+'</span>';
-    const kk=document.createElement("div");kk.className="kk";
-    k.tags.forEach(t=>{const i=document.createElement("i");i.textContent=t;kk.appendChild(i)});
-    const add=document.createElement("button");add.className="add";add.textContent="+ 표현 추가";
-    add.onclick=()=>{const v=prompt("구성원이 이렇게도 부릅니다 — 표현을 입력하세요","");
-      if(!v)return;k.tags.push(v);renderKw();toast("'"+v+"' 표현을 추가했습니다")};
-    kk.appendChild(add);d.appendChild(kk);
-    const s=document.createElement("span");s.className="src";s.textContent="→ "+k.src;
-    d.appendChild(s);L.appendChild(d);
+  for (let r = 0; r < 5; r++) SEED_INQ.forEach(([type, body], i) => {
+    const ago = (r * 6 + i) % 29;
+    inquiries.push({
+      id: 'HR-S' + (r * 8 + i + 1), type, body, userId: 'U-' + (120 + r * 8 + i), userName: '임직원',
+      includeConvo: i % 2 === 0, convo: i % 2 === 0 ? [{ role: 'user', text: body }] : [],
+      status: ago > 7 ? 'done' : 'open', createdAt: iso(daysAgo(ago)), seeded: true
+    });
   });
+  inquiries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return { questions, feedback, inquiries };
 }
-const AH={miss:["안내 못한 질문","노션에 해당 내용이 없어 페이지를 안내하지 못한 질문입니다. <b>문단을 추가</b>하면 다음부터 그 페이지로 안내합니다."],
- kw:["키워드 · 페이지 연결","구성원이 쓰는 표현을 노션 페이지에 걸어 둡니다. 여기 등록된 표현이 답변 아래 #관련 키워드로도 나옵니다."],
- sync:["노션 연동","연결된 노션 페이지와 동기화 상태입니다. 문서를 고치면 안내 내용도 함께 바뀝니다."]};
-document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll(".nav").forEach(x=>x.setAttribute("aria-pressed",x===b));
-  const t=b.dataset.t;
-  document.querySelectorAll("[data-p]").forEach(p=>p.hidden=p.dataset.p!==t);
-  document.getElementById("aTitle").textContent=AH[t][0];
-  document.getElementById("aLead").innerHTML=AH[t][1];
-});
-document.addEventListener("click",e=>{
-  const sy=e.target.closest("[data-sync]");
-  if(sy){sy.textContent="반영 중…";setTimeout(()=>{sy.outerHTML='<span class="badge bd-ok">동기화됨</span>';toast("온보딩 페이지를 반영했습니다")},900)}
-});
-const drawer=document.getElementById("drawer");let curRow=null;
-function openDrawer(r){
-  curRow=r;
-  document.getElementById("drQ").textContent="구성원 질문 · "+r.q;
-  const sel=document.getElementById("drPage");sel.selectedIndex=0;
-  [...sel.options].forEach((o,i)=>{if(o.text===r.p)sel.selectedIndex=i});
-  document.getElementById("drBody").value=r.d||"";
-  drawer.classList.remove("hide");
-}
-function closeDrawer(){drawer.classList.add("hide");curRow=null}
-document.getElementById("drX").onclick=closeDrawer;
-document.getElementById("drCancel").onclick=closeDrawer;
-document.getElementById("drSave").onclick=()=>{
-  if(!curRow)return;
-  const body=document.getElementById("drBody").value.trim();
-  if(!body){toast("추가할 문단을 입력해 주세요");return}
-  const page=document.getElementById("drPage").value,row=curRow,q=row.q,wasNew=row.s==="new";
-  row.d=body;row.p=page;row.s=wasNew?"wait":"ok";
-  closeDrawer();
-  const tr=[...document.querySelectorAll("#aTable tr")].find(t=>t.dataset.q===q);
-  if(tr)tr.classList.add("gone");
-  setTimeout(()=>{renderTable();toast(wasNew?page+"에 문단을 추가했습니다 · 다음 동기화 때 반영됩니다":page+"의 문단을 수정했습니다")},340);
+
+const Store = {
+  s: null,
+  init() {
+    let saved = null;
+    try { const raw = localStorage.getItem(LS_KEY); if (raw) saved = JSON.parse(raw); } catch (e) { saved = null; }
+    if (saved && saved.v === 1 && Array.isArray(saved.knowledge)) { this.s = saved; }
+    else {
+      const seed = buildSeed();
+      this.s = { v: 1, knowledge: KB_SEED.map(k => ({ ...k })), questions: seed.questions, feedback: seed.feedback,
+        inquiries: seed.inquiries, conversations: [], baseUsers: 682, role: null, userName: null };
+      this.save();
+    }
+    if (!this.s.conversations) this.s.conversations = [];
+  },
+  save() { try { localStorage.setItem(LS_KEY, JSON.stringify(this.s, (k, v) => k.startsWith('__') ? undefined : v)); } catch (e) { /* 저장 불가 환경에서도 세션은 동작 */ } },
+  reset() { try { localStorage.removeItem(LS_KEY); } catch (e) {} this.s = null; this.init(); },
+
+  /* ---- 조회/집계 API (서버 전환 시 이 함수들만 교체) ---- */
+  kb() { return this.s.knowledge; },
+  activeKb() { return this.s.knowledge.filter(k => docStatus(k) === 'current'); },
+  addQuestion(q) { this.s.questions.push(q); this.save(); return q; },
+  addFeedback(f) { this.s.feedback.push(f); this.save(); return f; },
+  addInquiry(i) { this.s.inquiries.unshift(i); this.save(); return i; },
+  stats() {
+    const qs = this.s.questions, fb = this.s.feedback;
+    const answered = qs.filter(q => q.answered).length;
+    const up = fb.filter(f => f.type === 'up').length, down = fb.filter(f => f.type === 'down').length;
+    const transferred = this.s.inquiries.length;
+    const users = this.s.baseUsers + new Set(qs.filter(q => !q.seeded).map(q => q.userId)).size;
+    return {
+      users, total: qs.length, answered, unanswered: qs.length - answered,
+      answerRate: qs.length ? (answered / qs.length * 100) : 0,
+      transferRate: qs.length ? (transferred / qs.length * 100) : 0,
+      posRate: (up + down) ? (up / (up + down) * 100) : 0,
+      up, down, transferred,
+      openInquiries: this.s.inquiries.filter(i => i.status === 'open').length
+    };
+  },
+  topQuestions(n = 10) {
+    const m = new Map();
+    this.s.questions.forEach(q => {
+      const k = q.text.trim();
+      const e = m.get(k) || { text: k, count: 0, category: q.category, answered: 0 };
+      e.count++; if (q.answered) e.answered++; m.set(k, e);
+    });
+    return [...m.values()].sort((a, b) => b.count - a.count).slice(0, n);
+  },
+  byCategory() {
+    const m = new Map(CATEGORIES.map(c => [c, 0]));
+    this.s.questions.forEach(q => m.set(q.category || '기타', (m.get(q.category || '기타') || 0) + 1));
+    return [...m.entries()].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  },
+  trend(days = 14) {
+    const out = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = iso(daysAgo(i));
+      out.push({ d, n: this.s.questions.filter(q => q.createdAt === d).length });
+    }
+    return out;
+  },
+  unansweredGroups() {
+    const m = new Map();
+    this.s.questions.filter(q => !q.answered).forEach(q => {
+      const e = m.get(q.text) || { text: q.text, category: q.category, count: 0, last: q.createdAt };
+      e.count++; if (q.createdAt > e.last) e.last = q.createdAt; m.set(q.text, e);
+    });
+    return [...m.values()].sort((a, b) => b.count - a.count);
+  },
+  knowledgeGaps() {
+    const gaps = new Map();
+    this.unansweredGroups().forEach(g => {
+      const topic = gapTopic(g.text, g.category);
+      const e = gaps.get(topic) || { topic, category: g.category, asked: 0, unanswered: 0, negative: 0, samples: [] };
+      e.asked += g.count; e.unanswered += g.count;
+      if (e.samples.length < 3) e.samples.push(g.text);
+      gaps.set(topic, e);
+    });
+    this.s.feedback.filter(f => f.type === 'down').forEach(f => {
+      const q = this.s.questions.find(q => q.id === f.questionId);
+      const topic = gapTopic(f.questionText || '', q ? q.category : '기타');
+      const e = gaps.get(topic) || { topic, category: q ? q.category : '기타', asked: 0, unanswered: 0, negative: 0, samples: [] };
+      e.asked += 1; e.negative += 1;
+      if (e.samples.length < 3 && f.questionText) e.samples.push(f.questionText);
+      gaps.set(topic, e);
+    });
+    return [...gaps.values()].filter(g => g.unanswered + g.negative >= 3)
+      .sort((a, b) => (b.unanswered * 2 + b.negative) - (a.unanswered * 2 + a.negative));
+  }
 };
 
-/* ========== 토스트 · 뷰 ========== */
-let tT;
-function toast(m){const t=document.getElementById("toast");t.innerHTML=m;t.classList.add("on");
-  clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("on"),2600)}
-let view="user";
-const segs=[...document.querySelectorAll("#segbar button")];
-function render(){
-  document.querySelectorAll(".pane").forEach(p=>p.classList.toggle("on",p.dataset.pane===view));
-  segs.forEach(s=>s.setAttribute("aria-pressed",s.dataset.v===view));
+/* 질문 문장에서 Knowledge Gap 주제를 뽑아낸다 (간이 토픽 라벨러) */
+const GAP_RULES = [
+  [['휴직','평가'], '휴직자 평가 기준'], [['휴직','승진'], '휴직 기간과 승진'],
+  [['대체인력'], '대체인력 운영'], [['복직','연차'], '복직자 연차 산정'],
+  [['성과급'], '성과급 지급 기준'], [['승진'], '승진 기준'],
+  [['퇴직금'], '퇴직금 지급'], [['평가'], '평가 운영'], [['연차'], '연차 운영'],
+];
+function gapTopic(text, cat) {
+  const t = (text || '').replace(/\s/g, '');
+  for (const [keys, label] of GAP_RULES) if (keys.every(k => t.includes(k))) return label;
+  return (cat || '기타') + ' 일반';
 }
-segs.forEach(s=>s.onclick=()=>{view=s.dataset.v;render()});
 
-/* ========== 시작 ========== */
-renderPage("attend");renderTable();renderKw();render();
-bubble("bot","안녕하세요 예솔 님.<br><b>궁금하신 거 있으세요?</b>");
+/* =========================================================================
+ * 3. 문서 버전 상태 판정 (시행일 / 종료일 / is_active)
+ * ========================================================================= */
+function docStatus(k) {
+  const today = iso(TODAY);
+  if (!k.is_active) return 'expired';
+  if (k.expiry_date && k.expiry_date < today) return 'expired';
+  if (k.effective_date > today) return 'upcoming';
+  return 'current';
+}
+const STATUS_LABEL = { current: ['🟢 현재 적용', 'mint'], expired: ['⚪ 종료', 'gray'], upcoming: ['🟣 시행 예정', 'purple'] };
+
+/* =========================================================================
+ * 4. RETRIEVAL + ANSWER ENGINE  (Rule-based / Mock AI)
+ *    - LLM API Key 없이도 전체 UX가 동작하도록 규칙 기반 검색·생성으로 구현
+ *    - Knowledge Base 근거를 찾지 못하면 답변을 생성하지 않는다(환각 방지)
+ *    TODO: 실제 LLM API 연결 — AI.ask() 내부만 교체하면 됨
+ *          (retrieve() 결과를 컨텍스트로 넣고 "근거 밖 내용 생성 금지" 시스템 프롬프트 사용)
+ * ========================================================================= */
+const STOP = new Set(['알려줘','알려주세요','궁금해요','궁금합니다','어떻게','하나요','인가요','되나요','있나요','싶어요','해주세요',
+  '무엇','뭐야','뭔가요','언제','어디','얼마','얼마나','가능','가능한가요','관련','대해','대한','그리고','제가','저는','우리','회사',
+  '방법','기준','문의','확인','해야','하는','되는','있는','경우','같은','정도','좀','것','수','때','및','안내']);
+const JOSA = /(으로부터|에게서|으로서|이라고|라고|에서는|에게는|까지도|부터는|으로는|이라도|은|는|이|가|을|를|에|의|도|만|로|으로|과|와|랑|이랑|에서|에게|까지|부터|요|나요|인가요|한가요|하나요|인지|든지)$/;
+const SYN = {
+  '연차':['휴가','연차','월차'], '월차':['연차'], '휴가':['연차','휴가'],
+  '육아휴직':['육아휴직','휴직','육아'], '출산':['출산휴가','산전후','모성보호'],
+  '경조':['경조사','경조휴가','경조금'], '조의':['초상','경조'], '부의':['초상','경조'], '장례':['초상','경조'],
+  '결혼':['결혼','경조'], '축의금':['경조금','결혼'],
+  '월급':['급여'], '연봉':['급여','보상'], '봉급':['급여'], '보너스':['성과급','인센티브'],
+  '인센티브':['성과급'], '상여':['성과급'],
+  '퇴사':['퇴직'], '사직':['퇴직'], '이직':['퇴직'],
+  '복지':['복리후생','복지포인트'], '포인트':['복지포인트'],
+  '증명서':['제증명','재직증명서'], '보험':['단체상해보험'],
+  '출퇴근':['근태'], '지각':['근태'], '초과근무':['근태','연장근무'],
+  '평가':['평가','수습평가'], '진급':['승진'], '교육':['교육','법정의무교육'],
+  '대체휴무':['휴일대체'], '대휴':['휴일대체'], '할인':['직원구매','제휴'],
+};
+
+/* 의미는 있으나 어느 문서에나 등장하는 일반어 — 근거 커버리지 판정에서 제외 */
+const GENERIC = new Set(['지원','사내','신청','제도','등록','사용','회사','임직원','구성원','직원','운영','가능','내용','대상',
+  '기준','방법','절차','어떻게','며칠','몇일','어떤','어느','무슨','얼마','정도','혹시','그럼','우리','저희','현재','관련','문의','확인','궁금',
+  '어디','언제','누가','누구','무엇','뭐지','알고','알려','싶은','싶습니다','해도','그리고','또는','보통','만약']);
+const VERB = /(할수있|할수|하는데|하는|하면|해요|합니다|하고|한다|하나|할|한|함|되나|되는|된다|된|됩니다|드려요|주세요|이나|인지|이면|라면|으면|했는데|했|였|아요|어요|여요|는데|고요|되)$/;
+/* 질문에서 '실제 내용어'만 추출 (근거 커버리지 판정용) */
+function contentTokens(q) {
+  const out = new Set();
+  normalize(q).split(' ').forEach(w => {
+    let t = w.replace(JOSA, '').replace(VERB, '').replace(JOSA, '');
+    if (t.length >= 2 && !STOP.has(t) && !GENERIC.has(t)) out.add(t);
+  });
+  return [...out];
+}
+function allText(k) { const ix = indexed(k); return ix.__all || (ix.__all = (ix.title + ' ' + ix.kw + ' ' + ix.faq + ' ' + ix.body).replace(/\s/g, '')); }
+/* 토큰 자체 / 접두어 / 동의어 중 하나라도 Knowledge에 있으면 '근거 있음'으로 본다 */
+function covCandidates(tok) {
+  const cand = [tok];
+  for (let n = tok.length - 1; n >= 2; n--) cand.push(tok.slice(0, n));
+  Object.keys(SYN).forEach(k => { if (tok.includes(k)) SYN[k].forEach(v => cand.push(v)); });
+  return cand;
+}
+function coveredAnywhere(tok) {
+  const cand = covCandidates(tok);
+  if (cand.some(c => GENERIC.has(c))) return true;
+  return Store.kb().some(k => cand.some(c => allText(k).includes(c)));
+}
+function coveredByDocs(docs, tok) {
+  const cand = covCandidates(tok);
+  if (cand.some(c => GENERIC.has(c))) return true;
+  return docs.some(k => cand.some(c => allText(k).includes(c)));
+}
+function coveredStrong(k, tok) { const ix = indexed(k); return (ix.title + ' ' + ix.kw + ' ' + ix.faq).replace(/\s/g, '').includes(tok); }
+
+function normalize(s) { return (s || '').toLowerCase().replace(/[^\uAC00-\uD7A3a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim(); }
+/* 질문 토큰 + 가중치. 원형 토큰 1.0, 접두어 0.5~0.6, 동의어 확장 0.45 */
+function weightedTokens(q) {
+  const map = new Map();
+  const put = (t, w) => { if (t && t.length >= 2 && !STOP.has(t)) map.set(t, Math.max(map.get(t) || 0, w)); };
+  normalize(q).split(' ').forEach(w0 => {
+    if (!w0) return;
+    const st = w0.replace(JOSA, '').replace(VERB, '').replace(JOSA, '');
+    put(w0, 1); put(st, 1);
+    const base = st.length >= 4 ? st : w0;
+    if (base.length >= 4) { put(base.slice(0, 3), 0.6); put(base.slice(0, 2), 0.5); }
+  });
+  [...map.keys()].forEach(t => { Object.keys(SYN).forEach(k => { if (t.includes(k)) SYN[k].forEach(v => put(v, 0.45)); }); });
+  return [...map.entries()].map(([t, w]) => ({ t, w }));
+}
+function tokenize(q) { return weightedTokens(q).map(x => x.t); }
+function bigrams(s) {
+  const t = normalize(s).replace(/\s/g, ''); const set = new Set();
+  for (let i = 0; i < t.length - 1; i++) set.add(t.slice(i, i + 2));
+  return set;
+}
+
+function indexed(k) {
+  if (k.__idx) return k.__idx;
+  const title = normalize(k.title), kw = normalize((k.keywords || []).join(' ')),
+        faq = normalize((k.faqs || []).join(' ')), body = normalize(k.content);
+  k.__idx = { title, kw, faq, body, bg: bigrams(k.title + ' ' + (k.keywords || []).join(' ') + ' ' + (k.faqs || []).join(' ')) };
+  return k.__idx;
+}
+
+function retrieve(query, opts) {
+  opts = opts || {};
+  const wt = weightedTokens(query), qbg = bigrams(query);
+  const results = [];
+  Store.kb().forEach(k => {
+    if (opts.activeOnly && docStatus(k) !== 'current') return;
+    const ix = indexed(k);
+    let score = 0, strong = 0;
+    wt.forEach(({ t, w }) => {
+      let hit = false;
+      if (ix.title.includes(t)) { score += 7 * w; hit = true; }
+      if (ix.kw.includes(t)) { score += 6 * w; hit = true; }
+      if (ix.faq.includes(t)) { score += 4 * w; hit = true; }
+      if (ix.body.includes(t)) score += 1.6 * w;
+      if (hit && w >= 0.9) strong++;
+    });
+    let inter = 0; qbg.forEach(b => { if (ix.bg.has(b)) inter++; });
+    score += (inter / Math.max(5, qbg.size)) * 9;
+    const st = docStatus(k);
+    if (st === 'current') score *= 1.25; else if (st === 'upcoming') score *= 0.85; else score *= 0.4;
+    if (k.is_demo) score *= 0.9;
+    if (score > 0) results.push({ k, score, strong, status: st });
+  });
+  return results.sort((a, b) => b.score - a.score).slice(0, 8);
+}
+
+/* 본문에서 질문과 가장 관련 있는 구간만 추출 */
+function extractSections(k, toks) {
+  const raw = k.content.trim();
+  const lines = raw.split('\n');
+  const secs = []; let cur = { head: '', lines: [] };
+  lines.forEach(ln => {
+    if (/^[\[■●]/.test(ln.trim()) && cur.lines.length) { secs.push(cur); cur = { head: ln, lines: [ln] }; }
+    else cur.lines.push(ln);
+  });
+  secs.push(cur);
+  if (raw.length <= 620 || secs.length <= 1) return raw;
+  const scored = secs.map(s => {
+    const t = normalize(s.lines.join(' ')).replace(/\s/g, '');
+    let sc = 0; toks.forEach(k2 => { if (t.includes(k2)) sc += 1; });
+    return { s, sc };
+  });
+  const max = Math.max(...scored.map(x => x.sc));
+  if (max === 0) return secs.slice(0, 2).map(s => s.lines.join('\n')).join('\n\n').trim();
+  const keep = scored.filter(x => x.sc >= Math.max(1, max - 1)).slice(0, 3);
+  return keep.map(x => x.s.lines.join('\n').trim()).join('\n\n').trim();
+}
+
+/* 가장 답에 가까운 한 문장 */
+function leadSentence(k, toks) {
+  const cands = k.content.split('\n').map(s => s.trim())
+    .filter(s => s.length > 12 && !/^[\[■●※]/.test(s) && !/^\d+\.\s*$/.test(s));
+  let best = null, bs = -1;
+  cands.forEach(s => {
+    const t = normalize(s).replace(/\s/g, ''); let sc = 0;
+    toks.forEach(x => { if (t.includes(x)) sc += 1; });
+    if (sc > bs) { bs = sc; best = s; }
+  });
+  return bs > 0 ? best : null;
+}
+
+const NO_ANSWER = `현재 등록된 HR 공식 자료에서는 정확한 답변을 확인하기 어렵습니다.
+개인의 상황에 따라 달라질 수 있는 내용이므로 HR 담당자에게 문의해 주세요.`;
+
+const AI = {
+  /* 질문 1건 처리 → 답변 객체 반환 */
+  ask(query) {
+    const toks = tokenize(query);
+    const cts = contentTokens(query);
+    const hits = retrieve(query);
+    const top = hits[0];
+
+    /* (1) 질문의 내용어가 Knowledge Base 어디에도 없으면 답변을 생성하지 않는다 */
+    const uncoveredAll = cts.filter(t => !coveredAnywhere(t));
+    const coverage = cts.length ? (cts.length - uncoveredAll.length) / cts.length : 1;
+    if (!top || top.score < 13 || top.strong === 0 || (cts.length > 0 && coverage < 0.4)) {
+      return { ok: false, text: NO_ANSWER, sources: [], keywords: suggestKeywords(toks, []), related: [],
+        confidence: 'none', missing: uncoveredAll };
+    }
+
+    /* (2) 상위 문서 선택 + 빠진 주제를 보완하는 문서 추가 (복합 질문 대응) */
+    const used = [top];
+    const second = hits[1];
+    if (second && second.score >= top.score * 0.55 && second.strong > 0 && second.k.category !== top.k.category) used.push(second);
+    cts.forEach(t => {
+      if (used.length >= 3) return;
+      if (coveredByDocs(used.map(u => u.k), t)) return;
+      let extra = hits.find(h => !used.includes(h) && coveredStrong(h.k, t));
+      if (!extra) {
+        const k2 = Store.kb().filter(k => docStatus(k) !== 'expired').find(k => coveredStrong(k, t));
+        if (k2) extra = { k: k2, score: 0, strong: 1, status: docStatus(k2) };
+      }
+      if (extra) used.push(extra);
+    });
+
+    /* (3) 본문 발췌 */
+    let body = extractSections(top.k, toks);
+    const lead = leadSentence(top.k, toks);
+    let text = '';
+    if (lead && !body.includes(lead)) text += lead + '\n\n';
+    text += body;
+    used.slice(1).forEach(u => {
+      text += '\n\n함께 적용되는 기준 — ' + u.k.title + '\n' + extractSections(u.k, toks).split('\n').slice(0, 7).join('\n');
+    });
+
+    /* (4) 신뢰도 판정 */
+    const usedDocs = used.map(u => u.k);
+    const notInUsed = cts.filter(t => !coveredByDocs(usedDocs, t));
+    let confidence = (top.score >= 30 && used.length === 1 && coverage === 1 && notInUsed.length === 0) ? 'official' : 'partial';
+    if (uncoveredAll.length) {
+      text += '\n\n※ 질문에 포함된 \'' + uncoveredAll.join('\', \'') + '\' 부분은 등록된 HR 공식 자료에서 확인되지 않았습니다. 해당 부분은 HR 담당자 확인이 필요합니다.';
+      confidence = 'partial';
+    } else if (confidence === 'partial') {
+      text += '\n\n※ 위 내용은 등록된 공식 기준을 그대로 안내한 것으로, 개인별 상황(근속·출근율·휴직 기간 등)에 따라 적용이 달라질 수 있습니다. 정확한 일수·금액은 인사운영팀 확인을 권장합니다.';
+    }
+    return {
+      ok: true, text,
+      sources: used.map(u => ({ ...u.k, __status: u.status })),
+      keywords: suggestKeywords(toks, used.map(u => u.k)),
+      related: suggestQuestions(query, used.map(u => u.k)),
+      confidence, srcIds: used.map(u => u.k.id), missing: uncoveredAll,
+      category: top.k.category
+    };
+  },
+  /* 관리자 AI Test 용 — 후보 문서 점수까지 반환 */
+  test(query) {
+    const hits = retrieve(query);
+    return { answer: this.ask(query), hits };
+  }
+};
+
+function suggestKeywords(toks, docs) {
+  const out = [];
+  const push = (w) => { if (w && !out.includes(w) && !toks.some(t => t === normalize(w))) out.push(w); };
+  docs.forEach(d => (d.keywords || []).slice(0, 5).forEach(push));
+  if (out.length < 4) {
+    const cats = docs.map(d => d.category);
+    Store.kb().filter(d => cats.includes(d.category) && docStatus(d) === 'current')
+      .forEach(d => (d.keywords || []).slice(0, 2).forEach(push));
+  }
+  if (out.length < 4) ['연차','경조휴가','육아휴직','복지포인트','퇴직'].forEach(push);
+  return out.slice(0, 6);
+}
+function suggestQuestions(query, docs) {
+  const asked = normalize(query), out = [];
+  const push = (q) => { if (q && normalize(q) !== asked && !out.includes(q)) out.push(q); };
+  docs.forEach(d => (d.faqs || []).forEach(push));
+  const cats = docs.map(d => d.category);
+  Store.kb().filter(d => docStatus(d) === 'current' && cats.includes(d.category) && !docs.includes(d))
+    .forEach(d => (d.faqs || []).slice(0, 1).forEach(push));
+  return out.slice(0, 3);
+}
+
+/* =========================================================================
+ * 5. UI 공통
+ * ========================================================================= */
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+const root = () => document.getElementById('root');
+const layer = () => document.getElementById('layer');
+const fmt = (n, d) => Number(n).toLocaleString('ko-KR', { maximumFractionDigits: d == null ? 0 : d, minimumFractionDigits: d || 0 });
+const kdate = (s) => (s || '').replace(/-/g, '.');
+
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+function openModal(html) {
+  const wrap = document.createElement('div');
+  wrap.className = 'modal';
+  wrap.innerHTML = html;
+  wrap.addEventListener('mousedown', e => { if (e.target === wrap) wrap.remove(); });
+  layer().appendChild(wrap);
+  const f = wrap.querySelector('input,textarea,select,button');
+  if (f) setTimeout(() => f.focus(), 30);
+  return wrap;
+}
+function closeModal(e) { const m = e ? e.target.closest('.modal') : layer().querySelector('.modal'); if (m) m.remove(); }
+
+const ROLES = {
+  USER: { key: 'USER', name: '김시몬', label: '일반 임직원', dept: '마케팅팀', ic: '🙋', color: 'var(--blue-l)', tint: 'var(--blue)',
+    perms: ['챗봇 사용', 'HR 문의 등록'] },
+  HR_ADMIN: { key: 'HR_ADMIN', name: '이인사', label: 'HR Admin', dept: '인사운영팀', ic: '🗂️', color: 'var(--mint-l)', tint: 'var(--mint)',
+    perms: ['Dashboard', 'Questions', 'Feedback', 'Knowledge 관리', 'AI Test'] },
+  SUPER_ADMIN: { key: 'SUPER_ADMIN', name: '박관리', label: 'Super Admin', dept: '인사기획팀', ic: '🛡️', color: 'var(--purple-l)', tint: 'var(--purple)',
+    perms: ['전체 메뉴', '권한 관리', '시스템 설정', '데이터 초기화'] }
+};
+const App = {
+  role: null,
+  route: '#/portal',
+  chatOpen: false,
+  msgs: [],
+  convoId: null
+};
+window.App = App;
+
+/* =========================================================================
+ * 6. 로그인
+ * ========================================================================= */
+function renderLogin() {
+  root().innerHTML = `
+  <div class="login">
+    <div class="box">
+      <div class="brandmark"><span class="sq">S</span> SIMMONS</div>
+      <h2>HR Assistant</h2>
+      <p>데모 계정을 선택하면 해당 권한의 화면으로 이동합니다.</p>
+      ${Object.values(ROLES).map(r => `
+        <button class="acct" onclick="App.login('${r.key}')">
+          <span class="ic" style="background:${r.color};color:${r.tint}">${r.ic}</span>
+          <span><b>${r.name} · ${r.label}</b><span>${r.dept} · ${r.perms.slice(0, 3).join(' / ')}</span></span>
+        </button>`).join('')}
+      <p class="small dim" style="margin:16px 0 0">사내 계정 연동 전 데모 단계입니다. TODO: Notion / SSO 계정 연동</p>
+    </div>
+  </div>`;
+}
+App.login = function (key) {
+  App.role = ROLES[key];
+  Store.s.role = key; Store.save();
+  location.hash = key === 'USER' ? '#/portal' : '#/admin/dashboard';
+  render();
+};
+App.logout = function () { App.role = null; Store.s.role = null; Store.save(); location.hash = '#/'; render(); };
+App.switchRole = function (key) { App.login(key); toast(ROLES[key].label + ' 계정으로 전환했습니다.'); };
+
+/* =========================================================================
+ * 7. 사용자 포털 (챗봇이 올라가는 데모 페이지 = Notion 페이지 대용)
+ * ========================================================================= */
+const PORTAL_CARDS = [
+  ['휴가 · 근태', '연차 산정, 정기휴가, 근태 등록과 마감 기준', '휴가·연차'],
+  ['보상 · 급여', '급여 지급일, 명세서, 계좌 변경', '급여·보상'],
+  ['복리후생', '복지포인트, 직원구매, 제휴 혜택', '복리후생'],
+  ['모성보호 · 휴직', '육아휴직, 출산휴가, 단축근무', '휴직·모성보호'],
+  ['증명 · 문서', '재직증명서, 원천징수영수증, 근로계약서', '증명·문서'],
+  ['교육', '법정의무교육, 외부교육, 구독 서비스', '교육']
+];
+function renderPortal() {
+  const canAdmin = App.role && App.role.key !== 'USER';
+  root().innerHTML = `
+  <header class="portal-top"><div class="inner">
+    <div class="brandmark"><span class="sq">S</span> SIMMONS People</div>
+    <div class="grow"></div>
+    ${canAdmin ? `<a class="btn sm" href="#/admin/dashboard">관리자 화면</a>` : ''}
+    <div class="who"><span class="avatar">${esc(App.role.name[0])}</span>
+      <span>${esc(App.role.name)} · ${esc(App.role.label)}</span></div>
+    <button class="btn sm ghost" onclick="App.logout()">로그아웃</button>
+  </div></header>
+  <main class="portal">
+    <h1>HR 안내 포털</h1>
+    <p class="lead">인사 제도와 신청 방법을 모아둔 공간입니다. 찾는 내용이 없으면 오른쪽 아래 버튼을 눌러 HR Assistant에게 바로 물어보세요.</p>
+    <div class="notice-grid">
+      ${PORTAL_CARDS.map(([t, d, cat]) => {
+        const n = Store.kb().filter(k => k.category === cat && docStatus(k) === 'current').length;
+        return `<div class="notice"><b>${esc(t)}</b><span>${esc(d)}</span>
+          <div style="margin-top:9px"><span class="tag gray">문서 ${n}건</span></div></div>`;
+      }).join('')}
+    </div>
+    <div class="hint-strip">
+      <span style="font-size:22px">💬</span>
+      <div style="flex:1;min-width:200px"><b>무엇이든 물어보세요</b>
+        <div class="small muted">"육아휴직 중에도 연차가 발생하나요?" 처럼 평소 말투로 질문하면 근거 문서와 함께 답해 드립니다.</div></div>
+      <button class="btn primary" onclick="App.openChat()">HR Assistant 열기</button>
+    </div>
+    <p class="small dim" style="margin-top:26px">이 페이지는 데모용 배경 화면입니다. TODO: 실제 Notion 페이지에 챗봇 위젯만 임베드</p>
+  </main>
+  ${chatWidgetHTML()}`;
+  mountChat();
+}
+
+/* =========================================================================
+ * 8. 챗봇 위젯
+ * ========================================================================= */
+const SUGGESTED = [
+  '연차는 언제 발생하나요?',
+  '육아휴직 중에도 연차가 발생하나요?',
+  '경조휴가는 며칠인가요?',
+  '복지포인트는 어디에 사용할 수 있나요?',
+  '퇴사하면 남은 연차는 어떻게 되나요?'
+];
+const INQUIRY_TYPES = ['급여/보상', '근태/휴가', '휴직/복직', '평가/승진', '복리후생', '증명/서류', '교육', '기타'];
+
+function chatWidgetHTML() {
+  return `
+  <button class="fab" id="fab" aria-label="HR Assistant 열기" onclick="App.toggleChat()">💬<span class="dot"></span></button>
+  <section class="chatwrap hidden" id="chat" role="dialog" aria-label="Simmons HR Assistant">
+    <div class="chat-head">
+      <span class="bot">🤖</span>
+      <span><b>Simmons HR Assistant</b><small>인사 규정 기반으로 답변합니다</small></span>
+      <button class="x" onclick="App.closeChat()" aria-label="닫기">✕</button>
+    </div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-foot">
+      <div class="composer">
+        <textarea id="q" rows="1" placeholder="무엇이 궁금하세요?" aria-label="질문 입력"></textarea>
+        <button class="send" id="sendBtn" onclick="App.send()" aria-label="보내기">➤</button>
+      </div>
+      <p class="legal">AI 답변은 등록된 HR 문서를 기반으로 하며, 개인별 적용은 HR 확인이 필요합니다.</p>
+    </div>
+  </section>`;
+}
+function mountChat() {
+  const ta = $('#q');
+  if (!ta) return;
+  ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 110) + 'px'; });
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); App.send(); }
+  });
+  if (App.chatOpen) { $('#chat').classList.remove('hidden'); }
+  paintChat();
+}
+App.toggleChat = function () { App.chatOpen ? App.closeChat() : App.openChat(); };
+App.openChat = function () {
+  App.chatOpen = true;
+  const c = $('#chat'); if (c) { c.classList.remove('hidden'); paintChat(); setTimeout(() => $('#q') && $('#q').focus(), 60); }
+};
+App.closeChat = function () { App.chatOpen = false; const c = $('#chat'); if (c) c.classList.add('hidden'); };
+
+function paintChat() {
+  const b = $('#chatBody'); if (!b) return;
+  if (!App.msgs.length) {
+    b.innerHTML = `
+      <div class="welcome">
+        <h3>👋 안녕하세요, ${esc(App.role ? App.role.name : '')}님</h3>
+        <p>HR 관련 내용을 무엇이든 질문해 주세요. 사내 인사 문서를 찾아 근거와 함께 답해 드립니다.</p>
+        <p class="sect-label">많이 물어보는 질문</p>
+        <div class="sugg">
+          ${SUGGESTED.map(q => `<button onclick="App.send(${JSON.stringify(q).replace(/"/g, '&quot;')})"><i>💬</i><span>${esc(q)}</span></button>`).join('')}
+        </div>
+        <p class="small dim" style="margin-top:16px">답변이 어려운 질문은 HR 담당자에게 바로 연결해 드립니다.</p>
+      </div>`;
+    return;
+  }
+  b.innerHTML = App.msgs.map(renderMsg).join('');
+  b.scrollTop = b.scrollHeight;
+}
+function renderMsg(m) {
+  if (m.role === 'user') return `<div class="msg user"><div class="bubble">${esc(m.text)}</div></div>`;
+  if (m.role === 'typing') return `<div class="msg"><span class="ava">🤖</span><div class="ans"><div class="typing"><i></i><i></i><i></i></div></div></div>`;
+  const a = m.answer;
+  const bodyHtml = esc(a.text).replace(/^(함께 적용되는 기준)$/m, '<b>$1</b>');
+  let h = `<div class="msg"><span class="ava">🤖</span><div class="ans${a.ok ? '' : ' nogo'}">
+    <div class="body">${bodyHtml}</div>`;
+  if (a.ok && !m.system) {
+    if (a.sources.length) h += `<div class="block"><div class="t">📚 참고자료</div>
+      ${a.sources.map(s => `
+        <div class="srcbox">
+          <div class="name">${esc(s.title)} <span class="tag ${STATUS_LABEL[s.__status][1]}">${STATUS_LABEL[s.__status][0]}</span></div>
+          <div class="meta">${esc(s.version)} · 시행일 ${kdate(s.effective_date)}${s.expiry_date ? ' ~ ' + kdate(s.expiry_date) : ''} · ${esc(s.owner)}${s.is_demo ? ' · 데모 데이터' : ''}</div>
+          ${s.source_url ? `<a href="${esc(s.source_url)}" target="_blank" rel="noopener">원문 보기 ↗</a>` : `<span class="small dim">원문 링크 없음</span>`}
+        </div>`).join('')}
+    </div>`;
+    if (a.keywords.length) h += `<div class="block"><div class="t">💡 함께 확인하면 좋은 내용</div>
+      <div class="kw">${a.keywords.map(k => `<button onclick="App.askKeyword(${JSON.stringify(k).replace(/"/g, '&quot;')})">${esc(k)}</button>`).join('')}</div></div>`;
+    if (a.related.length) h += `<div class="block"><div class="t">🔎 이어서 많이 묻는 질문</div>
+      <div class="relq">${a.related.map(q => `<button onclick="App.send(${JSON.stringify(q).replace(/"/g, '&quot;')})">${esc(q)}</button>`).join('')}</div></div>`;
+    h += `<div class="block"><div class="fb">
+      <span>도움이 되었나요?</span>
+      <button class="${m.fb === 'up' ? 'on' : ''}" onclick="App.vote('${m.id}','up')">👍 도움됐어요</button>
+      <button class="${m.fb === 'down' ? 'on bad' : ''}" onclick="App.vote('${m.id}','down')">👎 다시 확인해주세요</button>
+    </div>${m.fbOpen ? reasonForm(m) : ''}${m.fbDone ? `<div class="small dim" style="margin-top:7px">의견이 저장되었습니다. Knowledge 개선에 반영합니다.</div>` : ''}</div>`;
+    if (a.confidence === 'partial') h += `<div class="block"><button class="btn sm" onclick="App.openInquiry()">🙋 HR 담당자에게 문의</button></div>`;
+  } else {
+    h += `<div class="block"><button class="btn sm primary" onclick="App.openInquiry()">🙋 HR 문의하기</button></div>`;
+    if (a.keywords.length) h += `<div class="block"><div class="t">💡 대신 이런 내용은 확인할 수 있어요</div>
+      <div class="kw">${a.keywords.map(k => `<button onclick="App.askKeyword(${JSON.stringify(k).replace(/"/g, '&quot;')})">${esc(k)}</button>`).join('')}</div></div>`;
+  }
+  return h + `</div></div>`;
+}
+const FB_REASONS = ['규정과 다른 것 같아요', '최신 기준이 아닌 것 같아요', '질문 의도와 다른 답변이에요', '내용이 부족해요', '기타'];
+function reasonForm(m) {
+  return `<div class="fbform">
+    <div class="small" style="font-weight:600;margin-bottom:4px">어떤 부분이 아쉬웠나요?</div>
+    ${FB_REASONS.map((r, i) => `<label><input type="radio" name="fb-${m.id}" value="${esc(r)}"${i === 0 ? ' checked' : ''}> ${esc(r)}</label>`).join('')}
+    <div class="row" style="margin-top:8px">
+      <button class="btn sm primary" onclick="App.submitReason('${m.id}')">의견 보내기</button>
+      <button class="btn sm ghost" onclick="App.cancelReason('${m.id}')">취소</button>
+    </div>
+  </div>`;
+}
+
+App.send = function (preset) {
+  const ta = $('#q');
+  const text = (preset != null ? preset : (ta ? ta.value : '')).trim();
+  if (!text) return;
+  if (ta && preset == null) { ta.value = ''; ta.style.height = 'auto'; }
+  if (!App.convoId) { App.convoId = uid('C'); Store.s.conversations.push({ id: App.convoId, userId: App.role.key, startedAt: iso(TODAY) }); }
+  App.msgs.push({ id: uid('M'), role: 'user', text });
+  App.msgs.push({ id: 'typing', role: 'typing' });
+  paintChat();
+  setTimeout(() => {
+    App.msgs = App.msgs.filter(m => m.role !== 'typing');
+    const a = AI.ask(text);
+    const qid = uid('Q');
+    Store.addQuestion({
+      id: qid, text, category: a.ok ? a.category : guessCategory(text), answered: a.ok,
+      knowledgeId: a.ok ? a.srcIds[0] : null, status: a.ok ? 'answered' : 'unanswered',
+      userId: App.role.key + '-me', createdAt: iso(TODAY), conversationId: App.convoId, confidence: a.confidence
+    });
+    App.msgs.push({ id: uid('M'), role: 'ai', answer: a, questionId: qid, fb: null, fbOpen: false, fbDone: false });
+    paintChat();
+  }, 420);
+};
+App.askKeyword = function (kw) { App.send(kw + ' 관련 기준을 알려주세요'); };
+App.vote = function (mid, type) {
+  const m = App.msgs.find(x => x.id === mid); if (!m) return;
+  m.fb = type;
+  if (type === 'up') {
+    m.fbOpen = false; m.fbDone = true;
+    Store.addFeedback({ id: uid('F'), questionId: m.questionId, questionText: qText(m), type: 'up', reason: null, createdAt: iso(TODAY) });
+  } else { m.fbOpen = true; m.fbDone = false; }
+  paintChat();
+};
+App.submitReason = function (mid) {
+  const m = App.msgs.find(x => x.id === mid); if (!m) return;
+  const sel = document.querySelector(`input[name="fb-${mid}"]:checked`);
+  Store.addFeedback({ id: uid('F'), questionId: m.questionId, questionText: qText(m), type: 'down',
+    reason: sel ? sel.value : '기타', createdAt: iso(TODAY) });
+  m.fbOpen = false; m.fbDone = true;
+  paintChat(); toast('의견이 관리자 화면에 등록되었습니다.');
+};
+App.cancelReason = function (mid) { const m = App.msgs.find(x => x.id === mid); if (m) { m.fbOpen = false; m.fb = null; } paintChat(); };
+function qText(m) {
+  const i = App.msgs.indexOf(m);
+  for (let j = i - 1; j >= 0; j--) if (App.msgs[j].role === 'user') return App.msgs[j].text;
+  return '';
+}
+function guessCategory(text) {
+  const hits = retrieve(text);
+  return hits.length ? hits[0].k.category : '기타';
+}
+
+/* ---- HR 문의 ---- */
+App.openInquiry = function () {
+  const convo = App.msgs.filter(m => m.role === 'user' || m.role === 'ai')
+    .map(m => ({ role: m.role, text: m.role === 'user' ? m.text : m.answer.text.slice(0, 160) }));
+  const w = openModal(`<div class="sheet">
+    <div class="sheet-head"><h3>HR 문의하기</h3><button class="btn sm ghost" onclick="closeModal(event)">✕</button></div>
+    <div class="sheet-body">
+      <label class="field"><span>문의 유형</span>
+        <select class="select" id="iType">${INQUIRY_TYPES.map(t => `<option>${esc(t)}</option>`).join('')}</select></label>
+      <label class="field"><span>문의 내용</span>
+        <textarea class="textarea" id="iBody" placeholder="상황을 구체적으로 적어주시면 더 빠르게 안내드릴 수 있습니다."></textarea></label>
+      <label class="row" style="gap:8px;margin-bottom:10px"><input type="checkbox" id="iConvo" ${convo.length ? 'checked' : ''}>
+        <span class="small">기존 대화 내용을 HR 담당자에게 전달</span></label>
+      ${convo.length ? `<div class="convo-peek">${convo.map(c => `<div><b>${c.role === 'user' ? '나' : 'AI'}</b> · ${esc(c.text)}</div>`).join('')}</div>` : `<div class="small dim">전달할 대화 내용이 없습니다.</div>`}
+    </div>
+    <div class="sheet-foot">
+      <button class="btn" onclick="closeModal(event)">취소</button>
+      <button class="btn primary" onclick="App.submitInquiry()">문의 등록</button>
+    </div></div>`);
+  w.__convo = convo;
+};
+App.submitInquiry = function () {
+  const m = layer().querySelector('.modal');
+  const body = $('#iBody').value.trim();
+  if (!body) { toast('문의 내용을 입력해 주세요.'); $('#iBody').focus(); return; }
+  const include = $('#iConvo') && $('#iConvo').checked;
+  Store.addInquiry({
+    id: uid('HR'), type: $('#iType').value, body,
+    userId: App.role.key + '-me', userName: App.role.name, includeConvo: !!include,
+    convo: include ? (m.__convo || []) : [], status: 'open', createdAt: iso(TODAY)
+  });
+  closeModal();
+  toast('문의가 등록되었습니다. 담당자가 확인 후 회신합니다.');
+  App.msgs.push({ id: uid('M'), role: 'ai', questionId: null, system: true, fb: null, fbDone: true,
+    answer: { ok: true, text: 'HR 담당자에게 문의가 전달되었습니다.\n접수 내용은 인사운영팀에서 확인 후 회신드립니다.',
+      sources: [], keywords: [], related: [], confidence: 'official' } });
+  paintChat();
+};
+
+/* =========================================================================
+ * 9. 관리자 화면
+ * ========================================================================= */
+const MENU = [
+  { g: '개요', items: [['#/admin/dashboard', '📊', 'Dashboard']] },
+  { g: 'Questions', items: [
+    ['#/admin/questions/all', '💬', '전체 질문'],
+    ['#/admin/questions/top', '🏆', '질문 TOP 10'],
+    ['#/admin/questions/unanswered', '⚠️', '미답변 질문', () => Store.unansweredGroups().reduce((a, b) => a + b.count, 0)],
+    ['#/admin/questions/transfer', '🙋', 'HR 이관', () => Store.s.inquiries.length]] },
+  { g: 'Feedback', items: [
+    ['#/admin/feedback/all', '📝', '전체 Feedback'],
+    ['#/admin/feedback/negative', '👎', '부정 Feedback', () => Store.s.feedback.filter(f => f.type === 'down').length]] },
+  { g: 'Knowledge', items: [
+    ['#/admin/knowledge/docs', '📚', '문서 목록'],
+    ['#/admin/knowledge/faq', '❓', 'FAQ'],
+    ['#/admin/knowledge/keywords', '🏷️', '키워드'],
+    ['#/admin/knowledge/version', '🕑', 'Version'],
+    ['#/admin/knowledge/gap', '🧩', 'Knowledge Gap']] },
+  { g: 'AI', items: [['#/admin/ai-test', '🧪', 'AI 답변 테스트']] },
+  { g: 'Settings', items: [['#/admin/settings', '⚙️', '권한 관리']] }
+];
+const TITLES = {
+  '#/admin/dashboard': 'Dashboard', '#/admin/questions/all': '전체 질문', '#/admin/questions/top': '질문 TOP 10',
+  '#/admin/questions/unanswered': '미답변 질문', '#/admin/questions/transfer': 'HR 이관 문의',
+  '#/admin/feedback/all': '전체 Feedback', '#/admin/feedback/negative': '부정 Feedback',
+  '#/admin/knowledge/docs': 'Knowledge 문서 목록', '#/admin/knowledge/faq': 'FAQ 관리',
+  '#/admin/knowledge/keywords': '키워드', '#/admin/knowledge/version': 'Version 관리',
+  '#/admin/knowledge/gap': 'Knowledge Gap', '#/admin/ai-test': 'AI 답변 테스트', '#/admin/settings': '권한 관리'
+};
+
+function renderAdmin(route) {
+  if (!TITLES[route]) route = '#/admin/dashboard';
+  root().innerHTML = `
+  <div class="admin">
+    <nav class="side" id="side">
+      <div class="logo"><span class="sq">S</span> HR Assistant</div>
+      ${MENU.map(g => `<div class="grp">${esc(g.g)}</div>` + g.items.map(it => {
+        const b = it[3] ? it[3]() : 0;
+        return `<a href="${it[0]}" class="${route === it[0] ? 'on' : ''}" onclick="App.closeSide()">
+          <span>${it[1]}</span><span>${esc(it[2])}</span>${b ? `<span class="b">${b}</span>` : ''}</a>`;
+      }).join('')).join('')}
+      <div class="foot">${esc(App.role.name)} · ${esc(App.role.label)}<br>
+        <button class="btn sm ghost" style="margin-top:8px;color:#C9D5E8" onclick="App.logout()">로그아웃</button></div>
+    </nav>
+    <div class="main">
+      <div class="topbar">
+        <button class="burger" onclick="App.openSide()" aria-label="메뉴">☰</button>
+        <h2>${esc(TITLES[route])}</h2><div class="grow"></div>
+        <a class="btn sm" href="#/portal">사용자 화면</a>
+      </div>
+      <div class="content" id="ac"></div>
+    </div>
+  </div>`;
+  const c = $('#ac');
+  ({
+    '#/admin/dashboard': viewDashboard, '#/admin/questions/all': viewAllQ, '#/admin/questions/top': viewTopQ,
+    '#/admin/questions/unanswered': viewUnanswered, '#/admin/questions/transfer': viewTransfer,
+    '#/admin/feedback/all': (c) => viewFeedback(false)(c), '#/admin/feedback/negative': (c) => viewFeedback(true)(c),
+    '#/admin/knowledge/docs': viewDocs, '#/admin/knowledge/faq': viewFaq, '#/admin/knowledge/keywords': viewKeywords,
+    '#/admin/knowledge/version': viewVersions, '#/admin/knowledge/gap': viewGap,
+    '#/admin/ai-test': viewAiTest, '#/admin/settings': viewSettings
+  })[route](c);
+}
+App.openSide = function () {
+  $('#side').classList.add('open');
+  const s = document.createElement('div'); s.className = 'scrim'; s.onclick = App.closeSide; layer().appendChild(s);
+};
+App.closeSide = function () { const s = $('#side'); if (s) s.classList.remove('open'); const sc = layer().querySelector('.scrim'); if (sc) sc.remove(); };
+
+/* ---- 차트 (외부 라이브러리 없이 SVG 직접 생성) ---- */
+function barChart(data, opts) {
+  opts = opts || {};
+  const w = 620, h = 170, pad = 26, bw = (w - pad * 2) / data.length;
+  const max = Math.max(1, ...data.map(d => d.n));
+  return `<div class="chartwrap"><svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" role="img" aria-label="질문 추이">
+    <line class="axis" x1="${pad}" y1="${h - 24}" x2="${w - pad}" y2="${h - 24}"/>
+    ${data.map((d, i) => {
+      const bh = Math.round((d.n / max) * (h - 58));
+      const x = pad + i * bw + bw * .18, y = h - 24 - bh;
+      return `<rect x="${x}" y="${y}" width="${bw * .64}" height="${Math.max(bh, 2)}" rx="3" fill="${opts.color || 'var(--blue)'}" opacity="${.45 + .55 * (d.n / max)}"></rect>
+        ${d.n ? `<text class="val" x="${x + bw * .32}" y="${y - 4}" text-anchor="middle">${d.n}</text>` : ''}
+        ${i % opts.every === 0 ? `<text class="lbl" x="${x + bw * .32}" y="${h - 8}" text-anchor="middle">${d.d.slice(5)}</text>` : ''}`;
+    }).join('')}
+  </svg></div>`;
+}
+function catBars(entries) {
+  const total = entries.reduce((a, b) => a + b[1], 0) || 1;
+  const colors = ['var(--blue)', 'var(--mint)', 'var(--purple)', '#F59E0B', '#EC4899', '#0EA5E9', '#22C55E', '#94A3B8', '#6366F1', '#14B8A6', '#F97316'];
+  return entries.map(([c, n], i) => `
+    <div style="margin-bottom:11px">
+      <div class="spread" style="font-size:13px"><span>${esc(c)}</span>
+        <span class="dim">${fmt(n)}건 · ${(n / total * 100).toFixed(1)}%</span></div>
+      <div class="bar"><i style="width:${(n / total * 100).toFixed(1)}%;background:${colors[i % colors.length]}"></i></div>
+    </div>`).join('');
+}
+
+/* ---- Dashboard ---- */
+function viewDashboard(c) {
+  const s = Store.stats(), gaps = Store.knowledgeGaps().slice(0, 3);
+  c.innerHTML = `
+  <div class="kpis">
+    ${[['전체 사용자', fmt(s.users), '누적 이용자'],
+       ['질문 수', fmt(s.total), '누적 질문'],
+       ['AI 답변률', s.answerRate.toFixed(1) + '%', `답변 ${fmt(s.answered)}건`],
+       ['HR 이관률', s.transferRate.toFixed(1) + '%', `이관 ${fmt(s.transferred)}건`],
+       ['긍정 Feedback', s.posRate.toFixed(1) + '%', `👍 ${fmt(s.up)} / 👎 ${fmt(s.down)}`],
+       ['부정 Feedback', fmt(s.down), '개선 검토 필요']
+      ].map(([l, v, d]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('')}
+  </div>
+  <div class="grid2" style="margin-bottom:14px">
+    <div class="panel"><h3>최근 14일 질문 추이<span class="r">일별 질문 수</span></h3>
+      <div class="pad">${barChart(Store.trend(14), { every: 2 })}</div></div>
+    <div class="panel"><h3>Category별 질문 비율</h3><div class="pad">${catBars(Store.byCategory())}</div></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>질문 TOP 10<span class="r">누적 기준</span></h3><div class="pad">
+      ${Store.topQuestions(10).map((q, i) => `
+        <div class="rankrow"><span class="n">${i + 1}</span>
+          <span class="q">${esc(q.text)}<div class="small dim">${esc(q.category)}</div></span>
+          <span class="c">${fmt(q.count)}회</span></div>`).join('')}
+    </div></div>
+    <div>
+      <div class="panel" style="margin-bottom:14px"><h3>⚠ Knowledge Gap<span class="r"><a href="#/admin/knowledge/gap">전체 보기</a></span></h3>
+        <div class="pad">
+          ${gaps.length ? gaps.map(g => gapCard(g)).join('') : `<div class="empty"><b>확인된 Gap이 없습니다</b>미답변·부정 피드백이 누적되면 여기에 표시됩니다.</div>`}
+        </div></div>
+      <div class="panel"><h3>처리 대기</h3><div class="pad">
+        <div class="spread" style="padding:6px 0"><span>미답변 질문</span><b>${fmt(s.unanswered)}건</b></div>
+        <div class="spread" style="padding:6px 0;border-top:1px solid var(--line)"><span>부정 Feedback</span><b>${fmt(s.down)}건</b></div>
+        <div class="spread" style="padding:6px 0;border-top:1px solid var(--line)"><span>미처리 HR 문의</span><b>${fmt(s.openInquiries)}건</b></div>
+      </div></div>
+    </div>
+  </div>`;
+}
+function gapCard(g) {
+  return `<div class="gap">
+    <div class="q">${esc(g.topic)}</div>
+    <div class="s">질문 <b>${fmt(g.asked)}회</b> · 미답변 <b>${fmt(g.unanswered)}회</b>${g.negative ? ` · 부정 Feedback <b>${fmt(g.negative)}건</b>` : ''}
+      <div class="dim" style="margin-top:3px">예: ${esc(g.samples[0] || '')}</div></div>
+    <div class="row">
+      <button class="btn sm" onclick="App.gapAction('${esc(g.topic)}','faq')">FAQ 생성</button>
+      <button class="btn sm" onclick="App.gapAction('${esc(g.topic)}','knowledge')">Knowledge 추가</button>
+      <button class="btn sm" onclick="App.gapAction('${esc(g.topic)}','answer')">HR 답변 등록</button>
+    </div></div>`;
+}
+App.gapAction = function (topic, kind) {
+  const gap = Store.knowledgeGaps().find(g => g.topic === topic);
+  const sample = gap ? (gap.samples[0] || '') : '';
+  openKnowledgeForm(null, {
+    title: kind === 'faq' ? topic + ' FAQ' : topic + ' 운영기준',
+    category: gap ? gap.category : '기타',
+    keywords: topic.split(' ').join(', '),
+    faqs: gap ? gap.samples.join('\n') : sample,
+    content: kind === 'answer' ? 'HR 담당자 확인 답변:\n' : '',
+    hint: `Knowledge Gap "${topic}" 에서 생성 중입니다. 저장하면 동일 질문에 AI가 답변할 수 있게 됩니다.`
+  });
+};
+
+/* ---- Questions ---- */
+function viewAllQ(c) {
+  const qs = [...Store.s.questions].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 120);
+  c.innerHTML = `<div class="panel"><h3>전체 질문<span class="r">최근 120건 / 총 ${fmt(Store.s.questions.length)}건</span></h3>
+    <div class="tablewrap"><table><thead><tr>
+      <th>질문</th><th>Category</th><th>상태</th><th>참조 문서</th><th>일자</th></tr></thead><tbody>
+      ${qs.map(q => `<tr>
+        <td><span class="ttl">${esc(q.text)}</span></td>
+        <td>${esc(q.category || '-')}</td>
+        <td>${q.answered ? '<span class="tag mint">답변완료</span>' : '<span class="tag amber">미답변</span>'}</td>
+        <td class="small dim">${esc(q.knowledgeId || '-')}</td>
+        <td class="small dim">${kdate(q.createdAt)}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+function viewTopQ(c) {
+  const top = Store.topQuestions(10), max = top.length ? top[0].count : 1;
+  c.innerHTML = `<div class="panel"><h3>질문 TOP 10</h3><div class="pad">
+    ${top.map((q, i) => `<div class="rankrow"><span class="n">${i + 1}</span>
+      <span class="q">${esc(q.text)}
+        <div class="bar" style="max-width:340px"><i style="width:${(q.count / max * 100).toFixed(0)}%"></i></div>
+        <div class="small dim">${esc(q.category)} · 답변 성공률 ${(q.answered / q.count * 100).toFixed(0)}%</div></span>
+      <span class="c">${fmt(q.count)}회</span></div>`).join('')}
+  </div></div>`;
+}
+function viewUnanswered(c) {
+  const g = Store.unansweredGroups();
+  c.innerHTML = `<div class="panel"><h3>미답변 질문<span class="r">${fmt(g.reduce((a, b) => a + b.count, 0))}건 / ${g.length}종</span></h3>
+    ${g.length ? `<div class="tablewrap"><table><thead><tr><th>질문</th><th>Category</th><th>횟수</th><th>최근</th><th>조치</th></tr></thead><tbody>
+      ${g.map(x => `<tr>
+        <td><span class="ttl">${esc(x.text)}</span></td><td>${esc(x.category)}</td>
+        <td><b>${fmt(x.count)}회</b></td><td class="small dim">${kdate(x.last)}</td>
+        <td><div class="row"><button class="btn sm" onclick="App.newFromQuestion(${JSON.stringify(x.text).replace(/"/g, '&quot;')},${JSON.stringify(x.category).replace(/"/g, '&quot;')})">Knowledge 추가</button>
+          <button class="btn sm ghost" onclick="App.testQuestion(${JSON.stringify(x.text).replace(/"/g, '&quot;')})">AI 테스트</button></div></td></tr>`).join('')}
+    </tbody></table></div>` : `<div class="empty"><b>미답변 질문이 없습니다</b>모든 질문이 Knowledge로 답변되고 있습니다.</div>`}
+  </div>`;
+}
+App.newFromQuestion = function (text, cat) {
+  openKnowledgeForm(null, { title: text.replace(/[?？]/g, '') + ' 기준', category: cat, faqs: text,
+    keywords: tokenize(text).slice(0, 5).join(', '), hint: '미답변 질문에서 Knowledge를 생성합니다.' });
+};
+App.testQuestion = function (t) { location.hash = '#/admin/ai-test'; setTimeout(() => { const i = $('#tq'); if (i) { i.value = t; App.runTest(); } }, 60); };
+
+function viewTransfer(c) {
+  const list = Store.s.inquiries;
+  c.innerHTML = `<div class="panel"><h3>HR 이관 문의<span class="r">미처리 ${fmt(list.filter(i => i.status === 'open').length)}건</span></h3>
+    ${list.length ? `<div class="tablewrap"><table><thead><tr><th>유형</th><th>문의 내용</th><th>대화 전달</th><th>상태</th><th>등록일</th><th></th></tr></thead><tbody>
+      ${list.map(i => `<tr>
+        <td><span class="tag blue">${esc(i.type)}</span></td>
+        <td><span class="ttl">${esc(i.body.slice(0, 70))}${i.body.length > 70 ? '…' : ''}</span><div class="small dim">${esc(i.userName || i.userId)}</div></td>
+        <td class="small">${i.includeConvo && i.convo.length ? `포함 (${i.convo.length}턴)` : '미포함'}</td>
+        <td>${i.status === 'open' ? '<span class="tag amber">접수</span>' : '<span class="tag gray">완료</span>'}</td>
+        <td class="small dim">${kdate(i.createdAt)}</td>
+        <td><div class="row"><button class="btn sm" onclick="App.viewInquiry('${i.id}')">상세</button>
+          ${i.status === 'open' ? `<button class="btn sm ghost" onclick="App.closeInquiry('${i.id}')">완료</button>` : ''}</div></td></tr>`).join('')}
+    </tbody></table></div>` : `<div class="empty"><b>등록된 문의가 없습니다</b>사용자가 HR 문의하기를 누르면 여기에 쌓입니다.</div>`}
+  </div>`;
+}
+App.viewInquiry = function (id) {
+  const i = Store.s.inquiries.find(x => x.id === id); if (!i) return;
+  openModal(`<div class="sheet">
+    <div class="sheet-head"><h3>문의 상세</h3><button class="btn sm ghost" onclick="closeModal(event)">✕</button></div>
+    <div class="sheet-body">
+      <div class="row" style="margin-bottom:10px"><span class="tag blue">${esc(i.type)}</span>
+        <span class="small dim">${esc(i.userName || i.userId)} · ${kdate(i.createdAt)}</span></div>
+      <div class="card" style="padding:13px;margin-bottom:12px;white-space:pre-wrap">${esc(i.body)}</div>
+      <div class="sect-label">전달된 대화</div>
+      ${i.convo && i.convo.length ? `<div class="convo-peek">${i.convo.map(cv => `<div><b>${cv.role === 'user' ? '사용자' : 'AI'}</b> · ${esc(cv.text)}</div>`).join('')}</div>`
+        : `<div class="small dim">전달된 대화가 없습니다.</div>`}
+    </div>
+    <div class="sheet-foot"><button class="btn" onclick="closeModal(event)">닫기</button>
+      ${i.status === 'open' ? `<button class="btn primary" onclick="App.closeInquiry('${i.id}');closeModal(event)">처리 완료</button>` : ''}</div>
+  </div>`);
+};
+App.closeInquiry = function (id) {
+  const i = Store.s.inquiries.find(x => x.id === id); if (i) { i.status = 'done'; Store.save(); }
+  render(); toast('문의를 완료 처리했습니다.');
+};
+
+/* ---- Feedback ---- */
+function viewFeedback(negOnly) {
+  return function (c) {
+    const fb = Store.s.feedback.filter(f => !negOnly || f.type === 'down')
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).slice(0, 100);
+    const reasons = {};
+    Store.s.feedback.filter(f => f.type === 'down').forEach(f => { reasons[f.reason || '기타'] = (reasons[f.reason || '기타'] || 0) + 1; });
+    const rEntries = Object.entries(reasons).sort((a, b) => b[1] - a[1]);
+    c.innerHTML = `
+    ${negOnly && rEntries.length ? `<div class="panel" style="margin-bottom:14px"><h3>부정 Feedback 사유 분포</h3>
+      <div class="pad">${catBars(rEntries)}</div></div>` : ''}
+    <div class="panel"><h3>${negOnly ? '부정 Feedback' : '전체 Feedback'}<span class="r">${fmt(fb.length)}건 표시</span></h3>
+      ${fb.length ? `<div class="tablewrap"><table><thead><tr><th>질문</th><th>평가</th><th>사유</th><th>일자</th>${negOnly ? '<th>조치</th>' : ''}</tr></thead><tbody>
+        ${fb.map(f => `<tr>
+          <td><span class="ttl">${esc(f.questionText || '(질문 없음)')}</span></td>
+          <td>${f.type === 'up' ? '<span class="tag mint">👍 도움됨</span>' : '<span class="tag red">👎 확인필요</span>'}</td>
+          <td class="small">${esc(f.reason || '-')}</td>
+          <td class="small dim">${kdate(f.createdAt)}</td>
+          ${negOnly ? `<td><button class="btn sm" onclick="App.testQuestion(${JSON.stringify(f.questionText || '').replace(/"/g, '&quot;')})">AI 테스트</button></td>` : ''}
+        </tr>`).join('')}
+      </tbody></table></div>` : `<div class="empty"><b>Feedback이 없습니다</b>사용자가 답변에 👍/👎를 남기면 표시됩니다.</div>`}
+    </div>`;
+  };
+}
+
+/* ---- Knowledge ---- */
+function viewDocs(c) {
+  const kb = [...Store.kb()].sort((a, b) => (b.effective_date || '').localeCompare(a.effective_date || ''));
+  c.innerHTML = `
+  <div class="spread" style="margin-bottom:12px">
+    <div class="row">
+      <input class="input" id="kq" placeholder="문서명·키워드 검색" style="width:220px" oninput="App.filterDocs()">
+      <select class="select" id="kcat" style="width:170px" onchange="App.filterDocs()">
+        <option value="">전체 Category</option>${CATEGORIES.map(x => `<option>${esc(x)}</option>`).join('')}</select>
+    </div>
+    <button class="btn primary" onclick="openKnowledgeForm(null)">+ Knowledge 추가</button>
+  </div>
+  <div class="panel"><div class="tablewrap"><table><thead><tr>
+    <th>문서명</th><th>카테고리</th><th>Version</th><th>시행일</th><th>종료일</th><th>담당자</th><th>상태</th><th></th></tr></thead>
+    <tbody id="kbody">${kb.map(kRow).join('')}</tbody></table></div></div>`;
+}
+function kRow(k) {
+  const st = docStatus(k);
+  return `<tr data-t="${esc((k.title + ' ' + (k.keywords || []).join(' ')).toLowerCase())}" data-c="${esc(k.category)}">
+    <td><span class="ttl">${esc(k.title)}</span>${k.is_demo ? ' <span class="tag purple">데모</span>' : ''}
+      <div class="small dim">${esc(k.id)} · ${esc(k.board)}</div></td>
+    <td>${esc(k.category)}</td><td>${esc(k.version)}</td><td class="small">${kdate(k.effective_date)}</td>
+    <td class="small">${k.expiry_date ? kdate(k.expiry_date) : '-'}</td><td class="small">${esc(k.owner)}</td>
+    <td><span class="tag ${STATUS_LABEL[st][1]}">${STATUS_LABEL[st][0]}</span></td>
+    <td><div class="row"><button class="btn sm" onclick="openKnowledgeForm('${k.id}')">수정</button>
+      <button class="btn sm danger" onclick="App.deleteKnowledge('${k.id}')">삭제</button></div></td></tr>`;
+}
+App.filterDocs = function () {
+  const q = ($('#kq').value || '').toLowerCase().trim(), cat = $('#kcat').value;
+  [...$('#kbody').children].forEach(tr => {
+    const ok = (!q || tr.dataset.t.includes(q)) && (!cat || tr.dataset.c === cat);
+    tr.style.display = ok ? '' : 'none';
+  });
+};
+function openKnowledgeForm(id, pre) {
+  const k = id ? Store.kb().find(x => x.id === id) : null;
+  const v = Object.assign({ title: '', category: CATEGORIES[0], version: 'v1.0', effective_date: iso(TODAY), expiry_date: '',
+    owner: '인사운영팀', source_url: '', content: '', keywords: '', faqs: '', is_active: true, visibility: 'ALL' },
+    k ? { ...k, keywords: (k.keywords || []).join(', '), faqs: (k.faqs || []).join('\n'), expiry_date: k.expiry_date || '' } : {}, pre || {});
+  openModal(`<div class="sheet wide">
+    <div class="sheet-head"><h3>${k ? 'Knowledge 수정' : 'Knowledge 추가'}</h3><button class="btn sm ghost" onclick="closeModal(event)">✕</button></div>
+    <div class="sheet-body">
+      ${v.hint ? `<div class="card" style="padding:10px 12px;margin-bottom:12px;background:var(--blue-l);border-color:transparent"><span class="small">${esc(v.hint)}</span></div>` : ''}
+      <label class="field"><span>문서명</span><input class="input" id="f_title" value="${esc(v.title)}"></label>
+      <div class="row" style="gap:12px">
+        <label class="field" style="flex:1;min-width:150px"><span>카테고리</span>
+          <select class="select" id="f_cat">${CATEGORIES.map(x => `<option${x === v.category ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></label>
+        <label class="field" style="flex:1;min-width:110px"><span>Version</span><input class="input" id="f_ver" value="${esc(v.version)}"></label>
+        <label class="field" style="flex:1;min-width:130px"><span>담당자</span><input class="input" id="f_owner" value="${esc(v.owner)}"></label>
+      </div>
+      <div class="row" style="gap:12px">
+        <label class="field" style="flex:1;min-width:150px"><span>시행일</span><input class="input" type="date" id="f_eff" value="${esc(v.effective_date)}"></label>
+        <label class="field" style="flex:1;min-width:150px"><span>종료일 (없으면 비움)</span><input class="input" type="date" id="f_exp" value="${esc(v.expiry_date)}"></label>
+        <label class="field" style="flex:1;min-width:130px"><span>공개 범위</span>
+          <select class="select" id="f_vis">${['ALL', 'HR_ONLY', 'MANAGER'].map(x => `<option${x === v.visibility ? ' selected' : ''}>${x}</option>`).join('')}</select></label>
+      </div>
+      <label class="field"><span>원문 URL</span><input class="input" id="f_url" value="${esc(v.source_url)}" placeholder="https://..."></label>
+      <label class="field"><span>키워드 (쉼표로 구분)</span><input class="input" id="f_kw" value="${esc(v.keywords)}"></label>
+      <label class="field"><span>대표 질문 / FAQ (줄바꿈으로 구분)</span><textarea class="textarea" id="f_faq">${esc(v.faqs)}</textarea></label>
+      <label class="field"><span>본문</span><textarea class="textarea" id="f_content" style="min-height:190px">${esc(v.content)}</textarea></label>
+      <label class="row" style="gap:8px"><input type="checkbox" id="f_active" ${v.is_active ? 'checked' : ''}><span class="small">활성(is_active)</span></label>
+    </div>
+    <div class="sheet-foot"><button class="btn" onclick="closeModal(event)">취소</button>
+      <button class="btn primary" onclick="App.saveKnowledge(${k ? `'${k.id}'` : 'null'})">저장</button></div>
+  </div>`);
+}
+App.saveKnowledge = function (id) {
+  const title = $('#f_title').value.trim(), content = $('#f_content').value.trim();
+  if (!title || !content) { toast('문서명과 본문은 필수입니다.'); return; }
+  const data = {
+    title, category: $('#f_cat').value, version: $('#f_ver').value.trim() || 'v1.0',
+    owner: $('#f_owner').value.trim() || '인사운영팀', effective_date: $('#f_eff').value || iso(TODAY),
+    expiry_date: $('#f_exp').value || null, visibility: $('#f_vis').value, source_url: $('#f_url').value.trim(),
+    keywords: $('#f_kw').value.split(',').map(s => s.trim()).filter(Boolean),
+    faqs: $('#f_faq').value.split('\n').map(s => s.trim()).filter(Boolean),
+    content, is_active: $('#f_active').checked, __idx: null
+  };
+  if (id) {
+    const k = Store.kb().find(x => x.id === id); Object.assign(k, data); k.__idx = null;
+  } else {
+    Store.kb().push(K({ ...data, id: 'K-' + String(900 + Store.kb().length), board: '관리자 등록' }));
+  }
+  Store.save(); closeModal(); render(); toast(id ? '문서를 수정했습니다.' : '문서를 추가했습니다. 이제 AI가 이 내용으로 답변합니다.');
+};
+App.deleteKnowledge = function (id) {
+  const k = Store.kb().find(x => x.id === id); if (!k) return;
+  if (!confirm(`'${k.title}' 문서를 삭제할까요?`)) return;
+  Store.s.knowledge = Store.kb().filter(x => x.id !== id); Store.save(); render(); toast('문서를 삭제했습니다.');
+};
+
+function viewFaq(c) {
+  const rows = [];
+  Store.kb().forEach(k => (k.faqs || []).forEach(q => rows.push({ q, k })));
+  c.innerHTML = `<div class="panel"><h3>FAQ<span class="r">${fmt(rows.length)}건 · Knowledge 문서에 등록된 대표 질문</span></h3>
+    <div class="tablewrap"><table><thead><tr><th>질문</th><th>연결 문서</th><th>상태</th><th></th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td><span class="ttl">${esc(r.q)}</span></td>
+      <td class="small">${esc(r.k.title)} <span class="dim">${esc(r.k.version)}</span></td>
+      <td><span class="tag ${STATUS_LABEL[docStatus(r.k)][1]}">${STATUS_LABEL[docStatus(r.k)][0]}</span></td>
+      <td><button class="btn sm" onclick="App.testQuestion(${JSON.stringify(r.q).replace(/"/g, '&quot;')})">AI 테스트</button></td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+function viewKeywords(c) {
+  const m = new Map();
+  Store.kb().forEach(k => (k.keywords || []).forEach(w => {
+    const e = m.get(w) || { w, docs: [], asked: 0 }; e.docs.push(k); m.set(w, e);
+  }));
+  const qNorm = Store.s.questions.map(q => normalize(q.text));
+  m.forEach(e => { const w = normalize(e.w); e.asked = qNorm.filter(t => t.includes(w)).length; });
+  const list = [...m.values()].sort((a, b) => b.asked - a.asked || b.docs.length - a.docs.length);
+  c.innerHTML = `<div class="panel"><h3>키워드<span class="r">${fmt(list.length)}개 · 질문 매칭 횟수순</span></h3>
+    <div class="pad"><div class="kw">
+      ${list.map(e => `<button onclick="App.testQuestion(${JSON.stringify(e.w + ' 기준 알려줘').replace(/"/g, '&quot;')})"
+        title="문서 ${e.docs.length}건">${esc(e.w)} <span class="dim">${e.asked}</span></button>`).join('')}
+    </div><p class="small dim" style="margin-top:14px">숫자는 해당 키워드가 포함된 질문 수입니다. 클릭하면 AI 답변 테스트로 이동합니다.</p></div></div>`;
+}
+function viewVersions(c) {
+  const fam = new Map();
+  Store.kb().forEach(k => { const f = k.family || k.id; const e = fam.get(f) || []; e.push(k); fam.set(f, e); });
+  const groups = [...fam.values()].filter(g => g.length > 1)
+    .map(g => g.sort((a, b) => (a.effective_date || '').localeCompare(b.effective_date || '')));
+  const singles = [...fam.values()].filter(g => g.length === 1).length;
+  c.innerHTML = `<div class="panel"><h3>Version 관리<span class="r">버전 이력 ${groups.length}건 · 단일 버전 문서 ${singles}건</span></h3>
+    <div class="pad">
+      ${groups.map(g => `
+        <div style="margin-bottom:22px">
+          <div style="font-weight:700;color:var(--navy);margin-bottom:8px">${esc(g[0].title)}</div>
+          <div class="vtimeline">
+            ${g.map(k => { const st = docStatus(k);
+              return `<div class="vitem ${st === 'current' ? 'cur' : st === 'upcoming' ? 'next' : ''}">
+                <div class="spread"><span><b>${esc(k.version)}</b> <span class="small dim">${kdate(k.effective_date)}${k.expiry_date ? ' ~ ' + kdate(k.expiry_date) : ' ~'}</span></span>
+                  <span class="tag ${STATUS_LABEL[st][1]}">${STATUS_LABEL[st][0]}</span></div>
+                <div class="small dim">${esc(k.owner)} · ${esc(k.id)}</div></div>`; }).join('')}
+          </div>
+        </div>`).join('')}
+      <p class="small dim">AI는 오늘(${kdate(iso(TODAY))}) 기준으로 시행일·종료일·is_active를 확인해 현재 적용 문서를 우선 검색합니다. 종료 문서는 점수를 낮춰 후순위로 처리합니다.</p>
+    </div></div>`;
+}
+function viewGap(c) {
+  const gaps = Store.knowledgeGaps();
+  c.innerHTML = `<div class="panel"><h3>Knowledge Gap<span class="r">질문은 많은데 답변 근거가 없는 영역</span></h3>
+    <div class="pad">
+      ${gaps.length ? gaps.map(g => gapCard(g)).join('') : `<div class="empty"><b>확인된 Gap이 없습니다</b>미답변·부정 피드백이 3건 이상 누적되면 표시됩니다.</div>`}
+      <p class="small dim" style="margin-top:8px">미답변 질문 × 2 + 부정 Feedback 가중치로 정렬합니다.</p>
+    </div></div>`;
+}
+
+/* ---- AI Test ---- */
+function viewAiTest(c) {
+  c.innerHTML = `
+  <div class="panel" style="margin-bottom:14px"><h3>AI 답변 테스트</h3><div class="pad">
+    <div class="row" style="align-items:flex-start">
+      <input class="input" id="tq" style="flex:1;min-width:220px" placeholder="예: 휴직 중에도 성과급을 받을 수 있나요?"
+        onkeydown="if(event.key==='Enter')App.runTest()">
+      <button class="btn primary" onclick="App.runTest()">테스트</button>
+    </div>
+    <div class="kw" style="margin-top:10px">
+      ${['육아휴직 중에도 연차가 발생하나요?', '경조휴가는 며칠인가요?', '휴직 중에도 성과급을 받을 수 있나요?', '퇴사하면 남은 연차는 어떻게 되나요?']
+        .map(q => `<button onclick="App.testQuestion(${JSON.stringify(q).replace(/"/g, '&quot;')})">${esc(q)}</button>`).join('')}
+    </div>
+  </div></div>
+  <div id="tres"></div>`;
+}
+App.runTest = function () {
+  const q = ($('#tq').value || '').trim(); if (!q) return;
+  const r = AI.test(q), a = r.answer;
+  const badge = a.confidence === 'official' ? ['🟢 공식 기준 기반', 'mint'] : a.confidence === 'partial' ? ['🟡 일부 근거 · 확인 권장', 'amber'] : ['🔴 근거 없음 · HR 이관', 'red'];
+  $('#tres').innerHTML = `
+  <div class="grid2">
+    <div class="panel"><h3>AI 답변<span class="r"><span class="tag ${badge[1]}">${badge[0]}</span></span></h3>
+      <div class="pad"><div class="testbox" style="white-space:pre-wrap">${esc(a.text)}</div>
+      ${a.keywords.length ? `<div style="margin-top:12px"><div class="sect-label">관련 키워드</div><div class="kw">${a.keywords.map(k => `<button onclick="App.testQuestion(${JSON.stringify(k + ' 기준 알려줘').replace(/"/g, '&quot;')})">${esc(k)}</button>`).join('')}</div></div>` : ''}
+      </div></div>
+    <div class="panel"><h3>참조 Knowledge<span class="r">검색 점수순</span></h3><div class="pad">
+      ${r.hits.length ? r.hits.slice(0, 5).map(h => {
+        const used = a.srcIds && a.srcIds.includes(h.k.id);
+        return `<div class="spread" style="padding:9px 0;border-bottom:1px solid var(--line)">
+          <span style="min-width:0"><b>${used ? '✓' : '·'} ${esc(h.k.title)}</b>
+            <div class="small dim">${esc(h.k.version)} · ${esc(h.k.id)} · ${STATUS_LABEL[h.status][0]}</div></span>
+          <span class="small" style="font-weight:700;color:${used ? 'var(--blue)' : 'var(--text-3)'}">${h.score.toFixed(1)}</span></div>`;
+      }).join('') : `<div class="empty"><b>매칭된 문서가 없습니다</b>Knowledge 추가가 필요합니다.</div>`}
+      ${!a.ok ? `<button class="btn sm primary" style="margin-top:12px" onclick="App.newFromQuestion(${JSON.stringify(q).replace(/"/g, '&quot;')},'기타')">이 질문으로 Knowledge 추가</button>` : ''}
+    </div></div>
+  </div>`;
+};
+
+/* ---- Settings ---- */
+function viewSettings(c) {
+  const isSuper = App.role.key === 'SUPER_ADMIN';
+  c.innerHTML = `
+  <div class="panel" style="margin-bottom:14px"><h3>Role 정의</h3><div class="pad">
+    ${Object.values(ROLES).map(r => `
+      <div class="roleline">
+        <span class="ic" style="width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:${r.color};color:${r.tint};flex:none">${r.ic}</span>
+        <div style="flex:1;min-width:0"><b>${esc(r.key)}</b> <span class="small dim">${esc(r.label)}</span>
+          <div class="perm">${r.perms.join(' · ')}</div></div>
+        ${App.role.key === r.key ? '<span class="tag blue">현재 계정</span>' :
+          (isSuper ? `<button class="btn sm" onclick="App.switchRole('${r.key}')">이 계정으로 전환</button>` : '')}
+      </div>`).join('')}
+    <p class="small dim" style="margin-top:12px">TODO: 실제 Notion / SSO(SAML·OIDC) 계정 연동 후 Role 매핑. 현재는 데모용 로컬 Role입니다.</p>
+  </div></div>
+  <div class="panel"><h3>데이터</h3><div class="pad">
+    <div class="spread" style="padding:7px 0"><span>Knowledge 문서</span><b>${fmt(Store.kb().length)}건</b></div>
+    <div class="spread" style="padding:7px 0;border-top:1px solid var(--line)"><span>질문 로그</span><b>${fmt(Store.s.questions.length)}건</b></div>
+    <div class="spread" style="padding:7px 0;border-top:1px solid var(--line)"><span>Feedback</span><b>${fmt(Store.s.feedback.length)}건</b></div>
+    <div class="spread" style="padding:7px 0;border-top:1px solid var(--line)"><span>HR 문의</span><b>${fmt(Store.s.inquiries.length)}건</b></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" onclick="App.exportData()">Knowledge JSON 내보내기</button>
+      ${isSuper ? `<button class="btn danger" onclick="App.resetAll()">데모 데이터 초기화</button>` : ''}
+    </div>
+    <p class="small dim" style="margin-top:10px">저장소: 브라우저 localStorage. TODO: 실제 DB(PostgreSQL 등) + HRIS 연동으로 교체</p>
+  </div></div>`;
+}
+App.exportData = function () {
+  const blob = new Blob([JSON.stringify(Store.kb().map(k => { const c = { ...k }; delete c.__idx; return c; }), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'simmons-knowledge-base.json'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('Knowledge JSON을 내려받았습니다.');
+};
+App.resetAll = function () {
+  if (!confirm('데모 데이터를 초기 상태로 되돌릴까요? 추가한 Knowledge와 로그가 모두 삭제됩니다.')) return;
+  Store.reset(); render(); toast('초기화했습니다.');
+};
+
+/* =========================================================================
+ * 10. 라우터
+ * ========================================================================= */
+function render() {
+  const h = location.hash || '#/';
+  if (!App.role) { renderLogin(); return; }
+  if (h.startsWith('#/admin')) {
+    if (App.role.key === 'USER') { location.hash = '#/portal'; renderPortal(); toast('관리자 권한이 필요합니다.'); return; }
+    renderAdmin(h);
+  } else { renderPortal(); }
+}
+window.addEventListener('hashchange', render);
+Store.init();
+if (Store.s.role && ROLES[Store.s.role]) App.role = ROLES[Store.s.role];
+render();
+
 </script>
 </body>
 </html>
