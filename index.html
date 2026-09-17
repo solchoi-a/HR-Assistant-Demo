@@ -1267,11 +1267,11 @@ function openModal(html) {
 function closeModal(e) { const m = e ? e.target.closest('.modal') : layer().querySelector('.modal'); if (m) m.remove(); }
 
 const ROLES = {
-  USER: { key: 'USER', name: '김시몬', label: '일반 임직원', dept: '마케팅팀', ic: '🙋', color: 'var(--blue-l)', tint: 'var(--blue)',
+  USER: { key: 'USER', name: '최예솔', label: '일반 임직원', dept: '', ic: '🙋', color: 'var(--blue-l)', tint: 'var(--blue)',
     perms: ['챗봇 사용', 'HR 문의 등록'] },
-  HR_ADMIN: { key: 'HR_ADMIN', name: '이인사', label: 'HR Admin', dept: '인사운영팀', ic: '🗂️', color: 'var(--mint-l)', tint: 'var(--mint)',
+  HR_ADMIN: { key: 'HR_ADMIN', name: 'HR', label: 'HR Admin', dept: '인사기획팀 · 인사운영팀', ic: '🗂️', color: 'var(--mint-l)', tint: 'var(--mint)',
     perms: ['Dashboard', 'Questions', 'Feedback', 'Knowledge 관리', 'AI Test'] },
-  SUPER_ADMIN: { key: 'SUPER_ADMIN', name: '박관리', label: 'Super Admin', dept: '인사기획팀', ic: '🛡️', color: 'var(--purple-l)', tint: 'var(--purple)',
+  SUPER_ADMIN: { key: 'SUPER_ADMIN', name: 'HR', label: 'Super Admin', dept: '인사기획팀 · 인사운영팀', ic: '🛡️', color: 'var(--purple-l)', tint: 'var(--purple)',
     perms: ['전체 메뉴', '권한 관리', '시스템 설정', '데이터 초기화'] }
 };
 const App = {
@@ -1296,7 +1296,7 @@ function renderLogin() {
       ${Object.values(ROLES).map(r => `
         <button class="acct" onclick="App.login('${r.key}')">
           <span class="ic" style="background:${r.color};color:${r.tint}">${r.ic}</span>
-          <span><b>${r.name} · ${r.label}</b><span>${r.dept} · ${r.perms.slice(0, 3).join(' / ')}</span></span>
+          <span><b>${r.name} · ${r.label}</b><span>${r.dept ? r.dept + ' · ' : ''}${r.perms.slice(0, 3).join(' / ')}</span></span>
         </button>`).join('')}
       <p class="small dim" style="margin:16px 0 0">사내 계정 연동 전 데모 단계입니다. TODO: Notion / SSO 계정 연동</p>
     </div>
